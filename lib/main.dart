@@ -1,4 +1,4 @@
-import 'package:dating_app/presentation/auth/onboarding_screen.dart';
+import 'package:dating_app/presentation/bottom_nav/bottom_nav.dart';
 import 'package:dating_app/presentation/theme/theme.dart';
 import 'package:flutter/material.dart';
 
@@ -13,11 +13,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Dating App',
+      title: 'SparkMatch',
       theme: lightMode,
       darkTheme: darkMode,
       debugShowCheckedModeBanner: false,
-      home: const OnboardingScreen(),
+      home: const BottomNav(),
     );
   }
 }

@@ -307,3 +307,290 @@ class OtpInputField extends StatelessWidget {
     );
   }
 }
+
+class EndIconInputField extends StatefulWidget {
+  const EndIconInputField({
+    super.key,
+    required this.controller,
+    required this.hintText,
+    this.onRead = false,
+    this.maxLine = 1,
+    this.maxLength = -1,
+    this.digitOnly = false,
+    required this.onEndIconClick,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final bool onRead;
+  final int maxLine;
+  final int maxLength;
+  final bool digitOnly;
+  final Future<String> Function()
+  onEndIconClick; // 👈 Change: return String (can be async)
+
+  @override
+  State<EndIconInputField> createState() => _EndIconInputFieldState();
+}
+
+class _EndIconInputFieldState extends State<EndIconInputField> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8,
+      children: [
+        TextField(
+          controller: widget.controller,
+          style: TextStyle(
+            fontFamily: 'sk',
+            fontWeight: FontWeight.w400,
+            fontSize: 16,
+            color: MyColors.textColor(context),
+          ),
+          readOnly: widget.onRead,
+          maxLines: widget.maxLine,
+          maxLength: widget.maxLength != -1 ? widget.maxLength : 300,
+          inputFormatters: [
+            if (widget.digitOnly)
+              FilteringTextInputFormatter.digitsOnly, // allows only digits 0–9
+          ],
+          decoration: InputDecoration(
+            counterText: '',
+            label: MyRegularText(
+              text: widget.hintText,
+              color: MyColors.hintColor(context),
+              fontSize: 18,
+            ),
+            filled: true,
+            fillColor: MyColors.background(context),
+            suffixIcon: IconButton(
+              onPressed: () async {
+                // 👇 Call function and get text
+                final resultText = await widget.onEndIconClick();
+                // 👇 Set text in controller
+                setState(() {
+                  widget.controller.text = resultText;
+                });
+              },
+              icon: Icon(
+                Icons.calendar_month,
+                size: 20,
+                color: MyColors.hintColor(context),
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 18,
+              horizontal: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
+                color: MyColors.borderColor(context),
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
+                color: MyColors.borderColor(context),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
+                color: MyColors.borderColor(context),
+                width: 1.2,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class MyDropdown extends StatefulWidget {
+  const MyDropdown({
+    super.key,
+    required this.hint,
+    required this.options,
+    required this.onSelected,
+  });
+  final String hint;
+  final List<String> options;
+  final Function(String selected) onSelected;
+  @override
+  State<MyDropdown> createState() => _MyDropdownState();
+}
+
+class _MyDropdownState extends State<MyDropdown> {
+  String? selectedGender;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      value: selectedGender,
+      isExpanded: true,
+      style: TextStyle(
+        color: MyColors.textColor(context),
+        fontFamily: 'sk',
+        fontWeight: FontWeight.w400,
+        fontSize: 18,
+      ),
+      decoration: InputDecoration(
+        hintText: widget.hint,
+        hintStyle: TextStyle(
+          color: MyColors.hintColor(context),
+          fontFamily: 'sk',
+          fontWeight: FontWeight.w400,
+          fontSize: 16,
+        ),
+        labelStyle: TextStyle(
+          color: MyColors.hintColor(context),
+          fontFamily: 'sk',
+          fontWeight: FontWeight.w400,
+          fontSize: 16,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 18,
+          horizontal: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(17),
+          borderSide: BorderSide(
+            color: MyColors.borderColor(context),
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(17),
+          borderSide: BorderSide(
+            color: MyColors.borderColor(context),
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(17),
+          borderSide: BorderSide(
+            color: MyColors.borderColor(context),
+            width: 1.2,
+          ),
+        ),
+      ),
+      icon: Icon(
+        Icons.arrow_drop_down_outlined,
+        color: MyColors.hintColor(context),
+      ),
+      items: widget.options
+          .map(
+            (gender) =>
+                DropdownMenuItem<String>(value: gender, child: Text(gender)),
+          )
+          .toList(),
+      onChanged: (value) {
+        setState(() {
+          selectedGender = value;
+          widget.onSelected(selectedGender!);
+        });
+      },
+    );
+  }
+}
+
+class MySearchField extends StatefulWidget {
+  const MySearchField({
+    super.key,
+    required this.controller,
+    required this.hintText,
+    this.labelText,
+    this.onRead = false,
+    this.maxLine = 1,
+    this.maxLength = -1,
+    this.digitOnly = false,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final String? labelText;
+  final bool onRead;
+  final int maxLine;
+  final int maxLength;
+  final bool digitOnly;
+
+  @override
+  State<MySearchField> createState() => _MySearchFieldState();
+}
+
+class _MySearchFieldState extends State<MySearchField> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8,
+      children: [
+        TextField(
+          controller: widget.controller,
+          style: TextStyle(
+            fontFamily: 'sk',
+            fontWeight: FontWeight.w400,
+            fontSize: 16,
+            color: MyColors.textColor(context),
+          ),
+          readOnly: widget.onRead,
+          maxLines: widget.maxLine,
+          maxLength: widget.maxLength != -1 ? widget.maxLength : 300,
+          inputFormatters: [
+            if (widget.digitOnly)
+              FilteringTextInputFormatter.digitsOnly, // allows only digits 0–9
+          ],
+          cursorColor: MyColors.hintColor(context),
+          decoration: InputDecoration(
+            counterText: '',
+            hint: MyRegularText(
+              text: widget.hintText,
+              color: MyColors.hintColor(context),
+              fontSize: 18,
+            ),
+            filled: true,
+            fillColor: MyColors.background(context),
+            prefixIcon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: Icon(
+                Icons.search_rounded,
+                size: 30,
+                color: MyColors.hintColor(context),
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 18,
+              horizontal: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
+                color: MyColors.borderColor(context),
+                width: 1,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
+                color: MyColors.borderColor(context),
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
+                color: MyColors.borderColor(context),
+                width: 1.2,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

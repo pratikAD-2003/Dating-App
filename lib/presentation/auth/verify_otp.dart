@@ -1,6 +1,7 @@
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
+import 'package:dating_app/presentation/profile/update_profile.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -77,7 +78,17 @@ class _VerifyOtpState extends State<VerifyOtp> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         SizedBox(height: 50),
-                        MyButton(text: 'Verify', onClick: () {}),
+                        MyButton(
+                          text: 'Verify',
+                          onClick: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => UpdateProfile(),
+                              ),
+                            );
+                          },
+                        ),
                         SizedBox(height: 30),
                         Row(
                           spacing: 8,

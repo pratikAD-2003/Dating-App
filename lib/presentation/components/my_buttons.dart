@@ -47,9 +47,17 @@ class MyButton extends StatelessWidget {
 }
 
 class MyIconButton extends StatelessWidget {
-  const MyIconButton({super.key, required this.icon, required this.onClick});
+  const MyIconButton({
+    super.key,
+    required this.icon,
+    this.size = 30,
+    this.padding = 15,
+    required this.onClick,
+  });
 
   final String icon;
+  final double size;
+  final double padding;
   final VoidCallback onClick;
   @override
   Widget build(BuildContext context) {
@@ -62,8 +70,8 @@ class MyIconButton extends StatelessWidget {
           border: BoxBorder.all(color: MyColors.borderColor(context)),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: Image.asset(icon, width: 30, height: 30),
+          padding: EdgeInsets.all(padding),
+          child: Image.asset(icon, width: size, height: size),
         ),
       ),
     );

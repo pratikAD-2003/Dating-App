@@ -9,6 +9,9 @@ class MyColors {
   static const Color constWhite = Color(0xFFFFFFFF);
   static const Color constBlack = Color(0xFF000000);
 
+  static const Color constOrg = Color(0xFFF27121);
+  static const Color constBrinj = Color(0xFF8A2387);
+
   static const Color backgroundLight = Color(0xFFf5f5f5);
   static const Color backgroundDark = Color(0xFF1d1f21);
 
@@ -17,6 +20,9 @@ class MyColors {
 
   static Color textColor(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark ? constWhite : constBlack;
+
+  static Color themeColor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? constBlack : constWhite;
 
   static Color textLightColor(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
@@ -30,7 +36,7 @@ class MyColors {
 
   static Color bottomBarColor(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-      ? Colors.black.withValues(alpha: 0.7)
+      ? Colors.black.withValues(alpha: 0.4)
       : Color(0xffF3F3F3);
 
   static Color hintColor(BuildContext context) =>
