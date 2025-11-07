@@ -100,7 +100,7 @@ class _MyInputFieldState extends State<MyInputField> {
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
+              vertical: 14,
               horizontal: 16,
             ),
             border: OutlineInputBorder(
@@ -206,7 +206,7 @@ class _PasswordFieldState extends State<PasswordField> {
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
+              vertical: 14,
               horizontal: 16,
             ),
             border: OutlineInputBorder(
@@ -380,7 +380,7 @@ class _EndIconInputFieldState extends State<EndIconInputField> {
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
+              vertical: 14,
               horizontal: 16,
             ),
             border: OutlineInputBorder(
@@ -454,7 +454,7 @@ class _MyDropdownState extends State<MyDropdown> {
           fontSize: 16,
         ),
         contentPadding: const EdgeInsets.symmetric(
-          vertical: 18,
+          vertical: 14,
           horizontal: 16,
         ),
         border: OutlineInputBorder(
@@ -555,16 +555,24 @@ class _MySearchFieldState extends State<MySearchField> {
             ),
             filled: true,
             fillColor: MyColors.background(context),
-            prefixIcon: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: Icon(
-                Icons.search_rounded,
-                size: 30,
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(
+                left: 15,
+                right: 10,
+              ), // 👈 your custom padding
+              child: Image.asset(
+                'assets/images/search.png',
+                height: 22,
+                width: 22,
                 color: MyColors.hintColor(context),
               ),
             ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ), // 👈 ensures padding isn't overridden
             contentPadding: const EdgeInsets.symmetric(
-              vertical: 18,
+              vertical: 12,
               horizontal: 16,
             ),
             border: OutlineInputBorder(
@@ -586,6 +594,73 @@ class _MySearchFieldState extends State<MySearchField> {
               borderSide: BorderSide(
                 color: MyColors.borderColor(context),
                 width: 1.2,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class MyChatInputField extends StatelessWidget {
+  const MyChatInputField({
+    super.key,
+    required this.controller,
+    required this.hintText,
+  });
+  final TextEditingController controller;
+  final String hintText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8,
+      children: [
+        TextField(
+          controller: controller,
+          style: TextStyle(
+            fontFamily: 'sk',
+            fontWeight: FontWeight.w400,
+            fontSize: 16,
+            color: MyColors.textColor(context),
+          ),
+          minLines: 1,
+          maxLines: 10,
+          cursorColor: MyColors.hintColor(context),
+          decoration: InputDecoration(
+            counterText: '',
+            hint: MyRegularText(
+              text: hintText,
+              color: MyColors.hintColor(context),
+              fontSize: 18,
+            ),
+            filled: true,
+            fillColor: MyColors.chatBoxColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: MyColors.chatBoxColor(context),
+                width: 0,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: MyColors.chatBoxColor(context),
+                width: 0,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: MyColors.chatBoxColor(context),
+                width: 0,
               ),
             ),
           ),

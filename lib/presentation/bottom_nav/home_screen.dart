@@ -234,7 +234,7 @@ class _HomeCardLyState extends State<HomeCardLy> {
 
   @override
   Widget build(BuildContext context) {
-     return GestureDetector(
+    return GestureDetector(
       onPanStart: (_) {
         // reset when new drag starts
         dragValue = 0;
@@ -268,7 +268,7 @@ class _HomeCardLyState extends State<HomeCardLy> {
         });
       },
       child: ClipRRect(
-        borderRadius: BorderRadiusGeometry.circular(15),
+        borderRadius: BorderRadius.circular(15),
         child: Material(
           borderRadius: BorderRadius.circular(15),
           child: Container(
@@ -346,25 +346,25 @@ class _HomeCardLyState extends State<HomeCardLy> {
                 ),
 
                 // trigger when swipping
-                if (direction.isNotEmpty)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    child: Center(
-                      child: MyCircularElevatedBtn(
-                        icon: direction == "left"
-                            ? 'assets/images/close.png'
-                            : 'assets/images/heart.png',
-                        cardColor: MyColors.themeColor(context),
-                        iconColor: MyColors.constOrg,
-                        size: 75,
-                        iconSize: 35,
-                        onClick: () => {},
-                      ),
-                    ),
-                  ),
+                // if (direction.isNotEmpty)
+                //   Positioned(
+                //     bottom: 0,
+                //     left: 0,
+                //     right: 0,
+                //     top: 0,
+                //     child: Center(
+                //       child: MyCircularElevatedBtn(
+                //         icon: direction == "left"
+                //             ? 'assets/images/close.png'
+                //             : 'assets/images/heart.png',
+                //         cardColor: MyColors.themeColor(context),
+                //         iconColor: MyColors.constOrg,
+                //         size: 75,
+                //         iconSize: 35,
+                //         onClick: () => {},
+                //       ),
+                //     ),
+                //   ),
               ],
             ),
           ),

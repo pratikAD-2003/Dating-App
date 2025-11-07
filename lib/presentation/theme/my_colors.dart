@@ -36,7 +36,7 @@ class MyColors {
 
   static Color bottomBarColor(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-      ? Colors.black.withValues(alpha: 0.4)
+      ? Color(0xff1E1E1E)
       : Color(0xffF3F3F3);
 
   static Color hintColor(BuildContext context) =>
@@ -48,4 +48,9 @@ class MyColors {
       Theme.of(context).brightness == Brightness.dark
       ? Color.fromARGB(218, 232, 230, 234)
       : Color(0xffE8E6EA);
+
+  static Color chatBoxColor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? Color(0xff1E1E1E)
+      : Color(0xffF3F3F3);
 }

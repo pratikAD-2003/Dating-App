@@ -40,13 +40,17 @@ class MyBoldText extends StatelessWidget {
     this.fontSize = 24,
     this.textAlign = TextAlign.start,
     this.textDecoration = TextDecoration.none,
+    this.maxLine = 1,
+    this.textOverflow = TextOverflow.ellipsis,
   });
 
   final String text;
   final Color color;
   final double fontSize;
+  final int maxLine;
   final TextAlign textAlign;
   final TextDecoration textDecoration;
+  final TextOverflow textOverflow;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +63,9 @@ class MyBoldText extends StatelessWidget {
         fontSize: fontSize,
         decoration: textDecoration,
       ),
+      maxLines: maxLine,
       textAlign: textAlign,
+      overflow: textOverflow,
     );
   }
 }
