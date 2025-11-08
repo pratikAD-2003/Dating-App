@@ -71,7 +71,12 @@ class MyIconButton extends StatelessWidget {
         ),
         child: Padding(
           padding: EdgeInsets.all(padding),
-          child: Image.asset(icon, width: size, height: size),
+          child: Image.asset(
+            icon,
+            width: size,
+            height: size,
+            color: MyColors.constTheme,
+          ),
         ),
       ),
     );

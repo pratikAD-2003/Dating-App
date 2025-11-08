@@ -1,18 +1,18 @@
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
-import 'package:dating_app/presentation/profile/interest_screen.dart';
+import 'package:dating_app/presentation/profile/update_profile.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
 
-class UpdateProfile extends StatefulWidget {
-  const UpdateProfile({super.key});
+class EditProfile extends StatefulWidget {
+  const EditProfile({super.key});
 
   @override
-  State<UpdateProfile> createState() => _UpdateProfileState();
+  State<EditProfile> createState() => _EditProfileState();
 }
 
-class _UpdateProfileState extends State<UpdateProfile> {
+class _EditProfileState extends State<EditProfile> {
   TextEditingController nameController = TextEditingController();
   TextEditingController dobController = TextEditingController();
   TextEditingController profileController = TextEditingController();
@@ -47,21 +47,18 @@ class _UpdateProfileState extends State<UpdateProfile> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SkipText(
-                        text: 'Skip',
-                        backEnable: false,
-                        onClick: () {},
-                        onBackClick: () {
-                          Navigator.pop(context);
-                        },
+                      Row(
+                        spacing: 15,
+                        children: [
+                          MyBackButton(),
+                          MyBoldText(
+                            text: 'Edit Profile',
+                            color: MyColors.textColor(context),
+                            fontSize: 24,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      MyBoldText(
-                        text: 'Profile Details',
-                        color: MyColors.textColor(context),
-                        fontSize: 24,
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 30),
                       Center(
                         child: Column(
                           spacing: 10,
@@ -116,118 +113,12 @@ class _UpdateProfileState extends State<UpdateProfile> {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: MyButton(
-                  text: 'Continue',
-                  onClick: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return InterestsScreen();
-                        },
-                      ),
-                    );
-                  },
-                ),
+                child: MyButton(text: 'Update', onClick: () {}),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class ProfileCard extends StatelessWidget {
-  const ProfileCard({super.key, required this.onSelected});
-  final Function(String img) onSelected;
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned(
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Container(
-              height: 130,
-              width: 130,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                border: null,
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Image.asset('assets/images/m1.png', fit: BoxFit.cover),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: InkWell(
-            onTap: () => {onSelected('')},
-            borderRadius: BorderRadius.circular(30),
-            child: Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: MyColors.constTheme,
-                shape: BoxShape.circle,
-                border: BoxBorder.all(color: MyColors.constWhite, width: 2),
-              ),
-              child: Icon(Icons.camera_alt, color: MyColors.constWhite),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class SkipText extends StatelessWidget {
-  const SkipText({
-    super.key,
-    this.backEnable = false,
-    required this.text,
-    required this.onClick,
-    required this.onBackClick,
-  });
-  final bool backEnable;
-  final String text;
-  final VoidCallback onClick;
-  final VoidCallback onBackClick;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        if (backEnable)
-          InkWell(
-            onTap: () => onBackClick(),
-            borderRadius: BorderRadius.circular(15),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                border: BoxBorder.all(color: MyColors.borderColor(context)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Icon(
-                  Icons.arrow_back_ios_new,
-                  color: MyColors.constTheme,
-                ),
-              ),
-            ),
-          ),
-        if (!backEnable) SizedBox.shrink(),
-        InkWell(
-          onTap: () => onClick(),
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5.0),
-            child: MyBoldText(text: text, color: MyColors.constTheme),
-          ),
-        ),
-      ],
     );
   }
 }

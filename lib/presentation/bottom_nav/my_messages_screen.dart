@@ -2,7 +2,8 @@ import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
-import 'package:dating_app/presentation/user/chat_screen.dart';
+import 'package:dating_app/presentation/user/story_screen.dart';
+import 'package:dating_app/presentation/user/user_detail_screen.dart';
 import 'package:flutter/material.dart';
 
 class MyMessagesScreen extends StatelessWidget {
@@ -210,7 +211,9 @@ class MyMessageAppBarSection extends StatelessWidget {
             onClick: () => {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ChatScreen()),
+                // MaterialPageRoute(builder: (context) => ChatScreen()),
+                // MaterialPageRoute(builder: (context) => StoryScreen()),
+                MaterialPageRoute(builder: (context) => UserDetailScreen()),
               ),
             },
           ),

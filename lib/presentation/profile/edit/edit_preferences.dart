@@ -1,18 +1,17 @@
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
-import 'package:dating_app/presentation/profile/update_profile.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
 
-class LocationScreen extends StatefulWidget {
-  const LocationScreen({super.key});
+class EditPreferences extends StatefulWidget {
+  const EditPreferences({super.key});
 
   @override
-  State<LocationScreen> createState() => _LocationScreenState();
+  State<EditPreferences> createState() => _EditPreferencesState();
 }
 
-class _LocationScreenState extends State<LocationScreen> {
+class _EditPreferencesState extends State<EditPreferences> {
   TextEditingController genderController = TextEditingController();
   TextEditingController distanceController = TextEditingController();
   TextEditingController cityController = TextEditingController();
@@ -131,32 +130,24 @@ class _LocationScreenState extends State<LocationScreen> {
           padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20),
           child: Column(
             children: [
+              Row(
+                spacing: 15,
+                children: [
+                  MyBackButton(),
+                  MyBoldText(
+                    text: 'Edit Preferences',
+                    color: MyColors.textColor(context),
+                    fontSize: 22,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SkipText(
-                        text: 'Skip',
-                        backEnable: true,
-                        onClick: () {},
-                        onBackClick: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      MyBoldText(
-                        text: 'Match Preferences',
-                        color: MyColors.textColor(context),
-                        fontSize: 28,
-                      ),
-                      const SizedBox(height: 5),
-                      MyRegularText(
-                        text: "Find someone who’s closer than you think 💕.",
-                        color: MyColors.textLightColor(context),
-                        textAlign: TextAlign.start,
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                       Center(
                         child: Column(
                           spacing: 10,
@@ -213,7 +204,7 @@ class _LocationScreenState extends State<LocationScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: MyButton(text: 'Finished', onClick: () {}),
+                child: MyButton(text: 'Update', onClick: () {}),
               ),
             ],
           ),
