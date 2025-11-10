@@ -18,6 +18,11 @@ class AuthRepository {
     return LoginResModel.fromJson(response);
   }
 
+  Future<LoginResModel> googleAuth(Map<String, dynamic> data) async {
+    final response = await apiClient.post(ApiConstants.googleAuth, data);
+    return LoginResModel.fromJson(response);
+  }
+
   Future<SignupResModelModel> signup(Map<String, dynamic> data) async {
     final response = await apiClient.post(ApiConstants.signup, data);
     return SignupResModelModel.fromJson(response);

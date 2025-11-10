@@ -50,34 +50,45 @@ class MyIconButton extends StatelessWidget {
   const MyIconButton({
     super.key,
     required this.icon,
+    required this.onClick,
     this.size = 30,
     this.padding = 15,
-    required this.onClick,
+    this.isLoading = false,
   });
 
   final String icon;
   final double size;
   final double padding;
   final VoidCallback onClick;
+  final bool isLoading;
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => onClick(),
+      onTap: isLoading ? null : onClick, // disable click when loading
       borderRadius: BorderRadius.circular(15),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          border: BoxBorder.all(color: MyColors.borderColor(context)),
+          border: Border.all(color: MyColors.borderColor(context)), // fixed
         ),
-        child: Padding(
-          padding: EdgeInsets.all(padding),
-          child: Image.asset(
-            icon,
-            width: size,
-            height: size,
-            color: MyColors.constTheme,
-          ),
-        ),
+        padding: EdgeInsets.all(padding),
+        alignment: Alignment.center,
+        child: isLoading
+            ? SizedBox(
+                width: size,
+                height: size,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: MyColors.constTheme,
+                ),
+              )
+            : Image.asset(
+                icon,
+                width: size,
+                height: size,
+                color: MyColors.constTheme,
+              ),
       ),
     );
   }

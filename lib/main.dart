@@ -1,4 +1,4 @@
-import 'package:dating_app/presentation/profile/location_screen.dart';
+import 'package:dating_app/presentation/auth/onboarding_screen.dart';
 import 'package:dating_app/presentation/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       theme: lightMode,
       darkTheme: darkMode,
       debugShowCheckedModeBanner: false,
-      home: const LocationScreen(),
+      home: const OnboardingScreen(),
     );
   }
 }

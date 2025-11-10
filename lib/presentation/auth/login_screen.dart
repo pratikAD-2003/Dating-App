@@ -1,3 +1,5 @@
+import 'package:dating_app/data/local/google_signing_manager.dart';
+import 'package:dating_app/data/model/google_auth_req_model.dart';
 import 'package:dating_app/data/model/request/auth/login/login_req_model.dart';
 import 'package:dating_app/data/riverpod/auth_notifier.dart';
 import 'package:dating_app/presentation/auth/onboarding_screen.dart';
@@ -18,12 +20,47 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  late GoogleSignInManager googleSignInManager;
+  bool isLoading = false;
+
   TextEditingController emailController = TextEditingController();
   TextEditingController confirmPassController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    googleSignInManager = GoogleSignInManager(
+      onSuccess: (email, name, photoUrl, idToken) async {
+        setState(() => isLoading = false);
+
+        print("Email: $email");
+        print("Name: $name");
+        print("Photo URL: $photoUrl");
+        print("ID Token: $idToken");
+        // GoogleAuthReqModel data = GoogleAuthReqModel(token: '');
+        // await ref
+        //     .read(googleAuthNotifierProvider.notifier)
+        //     .googleAuth(data.toJson());
+      },
+      onFailure: (message) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: MyBoldText(
+              text: message,
+              fontSize: 16,
+              color: MyColors.themeColor(context),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authState = ref.watch(loginNotifierProvider);
+    final googleAuthState = ref.watch(googleAuthNotifierProvider);
 
     ref.listen(loginNotifierProvider, (previous, next) {
       next.whenOrNull(
@@ -33,6 +70,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               SnackBar(
                 content: MyBoldText(
                   text: 'Logged In',
+                  fontSize: 16,
+                  color: MyColors.themeColor(context),
+                ),
+              ),
+            );
+          }
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+            ),
+          );
+        },
+      );
+    });
+
+    ref.listen(googleAuthNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: MyBoldText(
+                  text: 'Google Login Successful',
                   fontSize: 16,
                   color: MyColors.themeColor(context),
                 ),
@@ -92,7 +158,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     MyButton(
                       text: 'Login account',
                       isLoading: authState.isLoading,
-                      onClick: () async{
+                      onClick: () async {
                         LoginReqModel data = LoginReqModel(
                           email: emailController.text,
                           password: confirmPassController.text,
@@ -115,7 +181,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         MyIconButton(
                           icon: 'assets/images/google.png',
-                          onClick: () {},
+                          isLoading: googleAuthState.isLoading || isLoading,
+                          onClick: () async {
+                            setState(() => isLoading = true);
+                            await googleSignInManager.signIn();
+                          },
                         ),
                         MyIconButton(
                           icon: 'assets/images/apple.png',

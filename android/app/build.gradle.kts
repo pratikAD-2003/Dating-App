@@ -37,6 +37,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    dependencies{
+        implementation ("com.google.android.gms:play-services-auth:20.7.0")
+    }
 }
 
 flutter {

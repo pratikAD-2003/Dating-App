@@ -4,6 +4,9 @@ class ApiConstants {
   // LOGIN
   static const String login = "api/user/auth/login";
 
+  // GOOGLE LOGIN/SIGNUP
+  static const String googleAuth = "api/user/auth/googleAuth";
+
   // SIGNUP
   static const String signup = "api/user/auth/signup";
   static const String verifyOtpForSignup = "api/user/auth/verifyOtpForSignup";

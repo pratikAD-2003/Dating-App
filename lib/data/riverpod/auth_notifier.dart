@@ -53,6 +53,45 @@ class AuthNotifier extends AsyncNotifier<LoginResModel?> {
 final loginNotifierProvider =
     AsyncNotifierProvider<AuthNotifier, LoginResModel?>(() => AuthNotifier());
 
+// 🔹 Login------------------------------------------------------------------------------------------------------------
+class GoogleAuthNotifier extends AsyncNotifier<LoginResModel?> {
+  late final AuthRepository _authRepository;
+
+  @override
+  Future<LoginResModel?> build() async {
+    // Initialize dependencies
+    _authRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  /// 🔹 Login method
+  Future<void> googleAuth(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authRepository.googleAuth(data);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      // Caught API model (e.g. {"message": "Incorrect password!"})
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("GOOGLE_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("GOOGLE_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+
+  /// 🔹 Logout or clear session
+  void logout() {
+    state = const AsyncValue.data(null);
+  }
+}
+
+final googleAuthNotifierProvider =
+    AsyncNotifierProvider<GoogleAuthNotifier, LoginResModel?>(() => GoogleAuthNotifier());
+
+
 // 🔹 Signup------------------------------------------------------------------------------------------------------------
 class SignupNotifier extends AsyncNotifier<SignupResModelModel?> {
   @override
