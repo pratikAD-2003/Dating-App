@@ -1,3 +1,5 @@
+import 'package:dating_app/data/model/request/auth/login/login_req_model.dart';
+import 'package:dating_app/data/riverpod/auth_notifier.dart';
 import 'package:dating_app/presentation/auth/login_screen.dart';
 import 'package:dating_app/presentation/auth/onboarding_screen.dart';
 import 'package:dating_app/presentation/auth/verify_otp.dart';
@@ -7,15 +9,16 @@ import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController dobController = TextEditingController();
@@ -24,6 +27,48 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(signupNotifierProvider);
+
+    ref.listen(signupNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            final snackBar = SnackBar(
+              content: MyBoldText(
+                text: user.message ?? "Otp sent to your email.",
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+              duration: const Duration(seconds: 2), // ⏱ Customize duration
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(snackBar).closed.then((
+              _,
+            ) {
+              // ✅ Navigate only after snackbar disappears
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VerifyOtp(email: emailController.text),
+                ),
+              );
+            });
+          }
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+            ),
+          );
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: MyColors.background(context),
       body: SafeArea(
@@ -66,15 +111,15 @@ class _SignupScreenState extends State<SignupScreen> {
                     SizedBox(height: 30),
                     MyButton(
                       text: 'Create account',
-                      onClick: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return VerifyOtp();
-                            },
-                          ),
+                      isLoading: authState.isLoading,
+                      onClick: () async{
+                        LoginReqModel data = LoginReqModel(
+                          email: emailController.text,
+                          password: confirmPassController.text,
                         );
+                        await ref
+                            .read(signupNotifierProvider.notifier)
+                            .signup(data.toJson());
                       },
                     ),
                     SizedBox(height: 40),

@@ -63,7 +63,7 @@ class _EditProfileState extends State<EditProfile> {
                         child: Column(
                           spacing: 10,
                           children: [
-                            ProfileCard(onSelected: (img) {}),
+                            ProfileCard(onSelected: () {}),
                             const SizedBox(height: 20),
                             MyInputField(
                               controller: nameController,

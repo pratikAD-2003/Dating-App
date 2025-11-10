@@ -1,23 +1,65 @@
+import 'package:dating_app/data/model/request/auth/signup/verify_otp_signup_model.dart';
+import 'package:dating_app/data/riverpod/auth_notifier.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/profile/update_profile.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class VerifyOtp extends StatefulWidget {
-  const VerifyOtp({super.key});
-
+class VerifyOtp extends ConsumerStatefulWidget {
+  const VerifyOtp({super.key, required this.email});
+  final String email;
   @override
-  State<VerifyOtp> createState() => _VerifyOtpState();
+  ConsumerState<VerifyOtp> createState() => _VerifyOtpState();
 }
 
-class _VerifyOtpState extends State<VerifyOtp> {
+class _VerifyOtpState extends ConsumerState<VerifyOtp> {
   final controllers = List.generate(4, (_) => TextEditingController());
   final focusNodes = List.generate(4, (_) => FocusNode());
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(verifySignupEmailNotifierProvider);
+
+    ref.listen(verifySignupEmailNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            final snackBar = SnackBar(
+              content: MyBoldText(
+                text: user.message ?? "Signup successfully.",
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+              duration: const Duration(seconds: 2), // ⏱ Customize duration
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(snackBar).closed.then((
+              _,
+            ) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UpdateProfile()),
+              );
+            });
+          }
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+            ),
+          );
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: MyColors.background(context),
       body: SafeArea(
@@ -80,13 +122,19 @@ class _VerifyOtpState extends State<VerifyOtp> {
                         SizedBox(height: 50),
                         MyButton(
                           text: 'Verify',
-                          onClick: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => UpdateProfile(),
-                              ),
+                          isLoading: authState.isLoading,
+                          onClick: () async{
+                            final otp = controllers.map((e) => e.text).join();
+
+                            final data = VerifyOtpSignupReqModel(
+                              email: widget.email,
+                              otp: double.parse(otp).toInt(),
                             );
+                            await ref
+                                .read(
+                                  verifySignupEmailNotifierProvider.notifier,
+                                )
+                                .verifyEmailSignup(data.toJson());
                           },
                         ),
                         SizedBox(height: 30),

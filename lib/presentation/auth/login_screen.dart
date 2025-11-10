@@ -1,3 +1,5 @@
+import 'package:dating_app/data/model/request/auth/login/login_req_model.dart';
+import 'package:dating_app/data/riverpod/auth_notifier.dart';
 import 'package:dating_app/presentation/auth/onboarding_screen.dart';
 import 'package:dating_app/presentation/auth/signup_screen.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
@@ -6,23 +8,52 @@ import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  TextEditingController nameController = TextEditingController();
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   TextEditingController emailController = TextEditingController();
-  TextEditingController dobController = TextEditingController();
-  TextEditingController passController = TextEditingController();
   TextEditingController confirmPassController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(loginNotifierProvider);
+
+    ref.listen(loginNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: MyBoldText(
+                  text: 'Logged In',
+                  fontSize: 16,
+                  color: MyColors.themeColor(context),
+                ),
+              ),
+            );
+          }
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+            ),
+          );
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: MyColors.background(context),
       body: SafeArea(
@@ -58,7 +89,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: 'Password',
                     ),
                     SizedBox(height: 30),
-                    MyButton(text: 'Login account', onClick: () {}),
+                    MyButton(
+                      text: 'Login account',
+                      isLoading: authState.isLoading,
+                      onClick: () async{
+                        LoginReqModel data = LoginReqModel(
+                          email: emailController.text,
+                          password: confirmPassController.text,
+                        );
+                        await ref
+                            .read(loginNotifierProvider.notifier)
+                            .login(data.toJson());
+                      },
+                    ),
                     SizedBox(height: 40),
                     MyDivider(dividerText: 'or sign in with'),
                     SizedBox(height: 30),

@@ -1,18 +1,24 @@
+import 'dart:io';
+
+import 'package:dating_app/data/riverpod/auth_notifier.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/profile/interest_screen.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-class UpdateProfile extends StatefulWidget {
+class UpdateProfile extends ConsumerStatefulWidget {
   const UpdateProfile({super.key});
 
   @override
-  State<UpdateProfile> createState() => _UpdateProfileState();
+  ConsumerState<UpdateProfile> createState() => _UpdateProfileState();
 }
 
-class _UpdateProfileState extends State<UpdateProfile> {
+class _UpdateProfileState extends ConsumerState<UpdateProfile> {
   TextEditingController nameController = TextEditingController();
   TextEditingController dobController = TextEditingController();
   TextEditingController profileController = TextEditingController();
@@ -33,8 +39,85 @@ class _UpdateProfileState extends State<UpdateProfile> {
     super.dispose();
   }
 
+  final ImagePicker _picker = ImagePicker();
+  File? _selectedImage;
+
+  Future<void> _pickImage() async {
+    Permission permission;
+
+    if (Platform.isAndroid) {
+      if (await Permission.photos.isGranted ||
+          await Permission.photos.isLimited) {
+        permission = Permission.photos;
+      } else {
+        permission = Permission.photos;
+      }
+    } else {
+      permission = Permission.photos;
+    }
+
+    final status = await permission.request();
+
+    if (status.isGranted) {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() => _selectedImage = File(pickedFile.path));
+      }
+    } else if (status.isPermanentlyDenied) {
+      openAppSettings();
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Permission denied')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(updateProfileNotifierProvider);
+
+    ref.listen(updateProfileNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            final snackBar = SnackBar(
+              content: MyBoldText(
+                text: user.message ?? "Profile Updated.",
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+              duration: const Duration(seconds: 2), // ⏱ Customize duration
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(snackBar).closed.then((
+              _,
+            ) {
+              // ✅ Navigate only after snackbar disappears
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return InterestsScreen();
+                  },
+                ),
+              );
+            });
+          }
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+            ),
+          );
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: MyColors.background(context),
       body: SafeArea(
@@ -66,7 +149,12 @@ class _UpdateProfileState extends State<UpdateProfile> {
                         child: Column(
                           spacing: 10,
                           children: [
-                            ProfileCard(onSelected: (img) {}),
+                            ProfileCard(
+                              selectedImage: _selectedImage,
+                              // networkImageUrl: userProfile?.profilePhotoUrl,
+                              onSelected: _pickImage,
+                            ),
+
                             const SizedBox(height: 20),
                             MyInputField(
                               controller: nameController,
@@ -85,7 +173,7 @@ class _UpdateProfileState extends State<UpdateProfile> {
                                   lastDate: DateTime.now(),
                                 );
                                 return picked != null
-                                    ? '${picked.day}/${picked.month}/${picked.year}'
+                                    ? '${picked.year}-${picked.month}-${picked.day}'
                                     : '';
                               },
                             ),
@@ -118,15 +206,21 @@ class _UpdateProfileState extends State<UpdateProfile> {
                 padding: const EdgeInsets.only(top: 10),
                 child: MyButton(
                   text: 'Continue',
-                  onClick: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return InterestsScreen();
-                        },
-                      ),
-                    );
+                  isLoading: authState.isLoading,
+                  onClick: () async {
+                    if (_selectedImage != null) {
+                      await ref
+                          .read(updateProfileNotifierProvider.notifier)
+                          .updateProfile(
+                            userId: "6911a82ceac3c0649ac99f80",
+                            fullName: nameController.text,
+                            profession: professionController.text,
+                            dateOfBirth: dobController.text,
+                            gender: genderController.text,
+                            bio: bioController.text,
+                            profilePhotoFile: _selectedImage,
+                          );
+                    }
                   },
                 ),
               ),
@@ -139,39 +233,47 @@ class _UpdateProfileState extends State<UpdateProfile> {
 }
 
 class ProfileCard extends StatelessWidget {
-  const ProfileCard({super.key, required this.onSelected});
-  final Function(String img) onSelected;
+  const ProfileCard({
+    super.key,
+    this.selectedImage,
+    this.networkImageUrl,
+    required this.onSelected,
+  });
+
+  final File? selectedImage;
+  final String? networkImageUrl;
+  final VoidCallback onSelected;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned(
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Container(
-              height: 130,
-              width: 130,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                border: null,
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Image.asset('assets/images/m1.png', fit: BoxFit.cover),
-            ),
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: Container(
+            height: 130,
+            width: 130,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(25)),
+            clipBehavior: Clip.antiAlias,
+            child: selectedImage != null
+                ? Image.file(selectedImage!, fit: BoxFit.cover)
+                : networkImageUrl != null
+                ? Image.network(networkImageUrl!, fit: BoxFit.cover)
+                : Image.asset('assets/images/m1.png', fit: BoxFit.cover),
           ),
         ),
         Positioned(
           bottom: 0,
           right: 0,
           child: InkWell(
-            onTap: () => {onSelected('')},
+            onTap: onSelected,
             borderRadius: BorderRadius.circular(30),
             child: Container(
-              padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: MyColors.constTheme,
                 shape: BoxShape.circle,
-                border: BoxBorder.all(color: MyColors.constWhite, width: 2),
+                border: Border.all(color: MyColors.constWhite, width: 2),
               ),
               child: Icon(Icons.camera_alt, color: MyColors.constWhite),
             ),

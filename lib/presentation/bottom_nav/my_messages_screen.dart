@@ -2,7 +2,6 @@ import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
-import 'package:dating_app/presentation/user/story_screen.dart';
 import 'package:dating_app/presentation/user/user_detail_screen.dart';
 import 'package:flutter/material.dart';
 
