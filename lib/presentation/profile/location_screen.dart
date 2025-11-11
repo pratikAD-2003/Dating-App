@@ -1,7 +1,10 @@
 import 'dart:io';
 
+import 'package:dating_app/data/local/prefs_helper.dart';
 import 'package:dating_app/data/model/response/auth/profile/preference_res_model.dart';
 import 'package:dating_app/data/riverpod/auth_notifier.dart';
+import 'package:dating_app/data/riverpod/place_notifier.dart';
+import 'package:dating_app/presentation/bottom_nav/bottom_nav.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
@@ -13,8 +16,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class LocationScreen extends ConsumerStatefulWidget {
-  const LocationScreen({super.key});
-
+  const LocationScreen({
+    super.key,
+    required this.interests,
+    required this.languages,
+  });
+  final List<String> interests;
+  final List<String> languages;
   @override
   ConsumerState<LocationScreen> createState() => _LocationScreenState();
 }
@@ -22,8 +30,6 @@ class LocationScreen extends ConsumerStatefulWidget {
 class _LocationScreenState extends ConsumerState<LocationScreen> {
   TextEditingController genderController = TextEditingController();
   TextEditingController distanceController = TextEditingController();
-  TextEditingController cityController = TextEditingController();
-  TextEditingController countryController = TextEditingController();
   TextEditingController searchController = TextEditingController();
 
   final List<String> genders = ["Male", "Female", "Non-binary", "Other"];
@@ -52,63 +58,109 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     searchController.addListener(_onSearchChanged);
   }
 
-  void _onSearchChanged() {
-    final query = searchController.text.toLowerCase();
+  Location? selectedPlace;
+
+  void _onSearchChanged() async {
+    final query = searchController.text.trim();
+    if (selectedPlace != null) return;
     if (query.isEmpty) {
       _removeOverlay();
-      setState(() => filteredCities = []);
-    } else {
-      filteredCities = allCities
-          .where((city) => city.toLowerCase().contains(query))
-          .toList();
+      setState(() => selectedPlace = null);
+      return;
+    }
+
+    // Show loading overlay while fetching from Mapbox
+    _showOverlay(isLoading: true);
+
+    final result = await ref.read(placeSearchProvider(query).future);
+
+    if (result != null) {
+      setState(() {
+        selectedPlace = result;
+      });
       _showOverlay();
+    } else {
+      _removeOverlay();
     }
   }
 
-  void _showOverlay() {
-    _removeOverlay(); // remove old one if exists
+  void _showOverlay({bool isLoading = false}) {
+    _removeOverlay();
     final overlay = Overlay.of(context);
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
-        width: renderBox.size.width - 40, // adjust to match your field width
+        width: renderBox.size.width - 40,
         child: CompositedTransformFollower(
           link: _layerLink,
           showWhenUnlinked: false,
-          offset: const Offset(0, 60), // position below your field
+          offset: const Offset(0, 60),
           child: Material(
             elevation: 4,
             borderRadius: BorderRadius.circular(12),
             color: MyColors.background(context),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: filteredCities.length,
-              itemBuilder: (context, index) {
-                final city = filteredCities[index];
-                return InkWell(
-                  onTap: () {
-                    searchController.text = city;
-                    _removeOverlay();
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+            child: isLoading
+                ? Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: MyColors.themeColor(context),
+                      ),
                     ),
+                  )
+                : selectedPlace == null
+                ? Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      city,
+                      "No location found",
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: MyColors.textColor(context),
                         fontSize: 16,
                       ),
                     ),
+                  )
+                : InkWell(
+                    onTap: () {
+                      searchController.text = selectedPlace!.city ?? '';
+                      _removeOverlay();
+
+                      debugPrint("📍 Selected place full data:");
+                      debugPrint(selectedPlace!.toJson().toString());
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selectedPlace!.city ?? 'Unknown city',
+                            style: TextStyle(
+                              color: MyColors.textColor(context),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            selectedPlace!.country ?? '',
+                            style: TextStyle(
+                              color: MyColors.textColor(
+                                context,
+                              ).withOpacity(0.7),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
           ),
         ),
       ),
@@ -136,7 +188,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
 
     ref.listen(updatePreferenceNotifierProvider, (previous, next) {
       next.whenOrNull(
-        data: (user) {
+        data: (user) async {
           if (user != null) {
             final snackBar = SnackBar(
               content: MyBoldText(
@@ -147,9 +199,34 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
               duration: const Duration(seconds: 2), // ⏱ Customize duration
             );
 
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(snackBar).closed.then((_) {});
+            ScaffoldMessenger.of(context).showSnackBar(snackBar).closed.then((
+              _,
+            ) async {
+              await PrefsHelper.saveUserPref(
+                ageMin: user.data?.ageRangePreference?.min,
+                ageMax: user.data?.ageRangePreference?.max,
+                locationType: "Point",
+                locationLat: user.data?.location?.coordinates?.first,
+                locationLng: user.data?.location?.coordinates?.last,
+                locationCity: user.data?.location?.city,
+                locationCountry: user.data?.location?.country,
+                distancePreference: user.data?.distancePreference,
+                gallery: user.data?.gallery,
+                genderPreference: user.data?.genderPreference,
+                interests: user.data?.interests,
+                languages: user.data?.languages,
+              );
+              await PrefsHelper.saveStatus(
+                isLoggedIn: true,
+                isProfileUpdated: true,
+                isPrefUpdated: true,
+              );
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const BottomNav()),
+                (Route<dynamic> route) => false,
+              );
+            });
           }
         },
         error: (err, st) {
@@ -238,23 +315,6 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                               },
                             ),
                             SizedBox.shrink(),
-                            MyInputField(
-                              controller: countryController,
-                              hintText: 'Country',
-                              onRead: true,
-                              condition: (text) {
-                                return text.isNotEmpty;
-                              },
-                            ),
-                            SizedBox.shrink(),
-                            MyInputField(
-                              controller: cityController,
-                              hintText: 'City',
-                              onRead: true,
-                              condition: (text) {
-                                return text.isNotEmpty;
-                              },
-                            ),
                           ],
                         ),
                       ),
@@ -268,25 +328,31 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                   text: 'Finished',
                   isLoading: authState.isLoading,
                   onClick: () async {
-                    await ref
-                        .read(updatePreferenceNotifierProvider.notifier)
-                        .updatePref(
-                          userId: '6911a82ceac3c0649ac99f80',
-                          interests: [],
-                          languages: [],
-                          distancePreference: double.parse(
-                            distanceController.text,
-                          ),
-                          ageRangePreference: [],
-                          genderPreference: [genderController.text],
-                          location: Location(
-                            type: "Point",
-                            city: "Bengluru",
-                            country: "India",
-                            coordinates: [77.5946, 12.9716],
-                          ).toJson(),
-                          images: photogalleryImages,
-                        );
+                    String? userId = await PrefsHelper.getUserId();
+                    if (userId != null) {
+                      await ref
+                          .read(updatePreferenceNotifierProvider.notifier)
+                          .updatePref(
+                            userId: userId,
+                            interests: widget.interests,
+                            languages: widget.languages,
+                            distancePreference: double.parse(
+                              distanceController.text,
+                            ),
+                            ageRangePreference: AgeRangePreference(
+                              min: 18,
+                              max: 40,
+                            ),
+                            genderPreference: [genderController.text],
+                            location: Location(
+                              type: "Point",
+                              city: selectedPlace?.city,
+                              country: selectedPlace?.country,
+                              coordinates: selectedPlace?.coordinates,
+                            ).toJson(),
+                            images: photogalleryImages,
+                          );
+                    }
                   },
                 ),
               ),

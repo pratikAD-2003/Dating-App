@@ -1,12 +1,15 @@
+import 'package:dating_app/utils.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleSignInManager {
-  final Function(String email, String name, String photoUrl, String idToken) onSuccess;
+  final Function(String email, String name, String photoUrl, String idToken)
+  onSuccess;
   final Function(String) onFailure;
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn.standard(
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
     // clientId is only needed for Flutter Web
+    serverClientId: Utils.token,
   );
 
   GoogleSignInManager({required this.onSuccess, required this.onFailure});

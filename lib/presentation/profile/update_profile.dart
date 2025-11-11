@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dating_app/data/local/prefs_helper.dart';
 import 'package:dating_app/data/riverpod/auth_notifier.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
@@ -78,7 +79,7 @@ class _UpdateProfileState extends ConsumerState<UpdateProfile> {
 
     ref.listen(updateProfileNotifierProvider, (previous, next) {
       next.whenOrNull(
-        data: (user) {
+        data: (user) async {
           if (user != null) {
             final snackBar = SnackBar(
               content: MyBoldText(
@@ -91,15 +92,29 @@ class _UpdateProfileState extends ConsumerState<UpdateProfile> {
 
             ScaffoldMessenger.of(context).showSnackBar(snackBar).closed.then((
               _,
-            ) {
+            ) async {
+              await PrefsHelper.saveUserProfile(
+                bio: user.data?.bio,
+                dateOfBirth: user.data?.dateOfBirth,
+                fullName: user.data?.fullName,
+                gender: user.data?.gender,
+                profession: user.data?.profession,
+                profilePhotoUrl: user.data?.profilePhotoUrl,
+              );
+              await PrefsHelper.saveStatus(
+                isLoggedIn: true,
+                isProfileUpdated: true,
+                isPrefUpdated: false,
+              );
               // ✅ Navigate only after snackbar disappears
-              Navigator.push(
+              Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
                   builder: (context) {
                     return InterestsScreen();
                   },
                 ),
+                (Route<dynamic> route) => false,
               );
             });
           }
@@ -208,11 +223,12 @@ class _UpdateProfileState extends ConsumerState<UpdateProfile> {
                   text: 'Continue',
                   isLoading: authState.isLoading,
                   onClick: () async {
-                    if (_selectedImage != null) {
+                    String? userId = await PrefsHelper.getUserId();
+                    if (_selectedImage != null && userId != null) {
                       await ref
                           .read(updateProfileNotifierProvider.notifier)
                           .updateProfile(
-                            userId: "6911a82ceac3c0649ac99f80",
+                            userId: userId,
                             fullName: nameController.text,
                             profession: professionController.text,
                             dateOfBirth: dobController.text,

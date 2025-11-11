@@ -124,7 +124,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return LanguageScreen();
+                          return LanguageScreen(interests: selectedInterests);
                         },
                       ),
                     );

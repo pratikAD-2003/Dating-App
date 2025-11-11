@@ -7,8 +7,8 @@ import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
 
 class LanguageScreen extends StatefulWidget {
-  const LanguageScreen({super.key});
-
+  const LanguageScreen({super.key, required this.interests});
+  final List<String> interests;
   @override
   State<LanguageScreen> createState() => _LanguageScreenState();
 }
@@ -125,7 +125,10 @@ class _LanguageScreenState extends State<LanguageScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return LocationScreen();
+                          return LocationScreen(
+                            interests: widget.interests,
+                            languages: selectedLanguages,
+                          );
                         },
                       ),
                     );

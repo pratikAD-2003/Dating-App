@@ -208,7 +208,7 @@ class _OnBoardingBannerState extends State<OnBoardingBanner> {
               .toList(),
           options: CarouselOptions(
             height: 380,
-            // autoPlay: true,
+            autoPlay: true,
             autoPlayInterval: Duration(seconds: 5),
             autoPlayAnimationDuration: Duration(milliseconds: 800),
             enlargeCenterPage: true,

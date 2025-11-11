@@ -106,7 +106,7 @@ class ChatUserCard extends StatelessWidget {
                   MyRegularText(
                     text: '23 min',
                     color: MyColors.hintColor(context),
-                    fontSize: 16,
+                    fontSize: 14,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -117,7 +117,7 @@ class ChatUserCard extends StatelessWidget {
                   MyRegularText(
                     text: 'Hii',
                     color: MyColors.textColor(context),
-                    fontSize: 16,
+                    fontSize: 15,
                     textAlign: TextAlign.center,
                   ),
                   Container(
@@ -125,12 +125,12 @@ class ChatUserCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(50),
                       color: MyColors.constTheme,
                     ),
-                    height: 25,
-                    width: 25,
+                    height: 22,
+                    width: 22,
                     child: MyBoldText(
                       text: '10',
                       color: MyColors.constWhite,
-                      fontSize: 16,
+                      fontSize: 14,
                       textAlign: TextAlign.center,
                     ),
                   ),

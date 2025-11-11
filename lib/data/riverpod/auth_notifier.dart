@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:dating_app/data/model/api_exception_model.dart';
 import 'package:dating_app/data/model/response/auth/login/login_res_model.dart';
+import 'package:dating_app/data/model/response/auth/profile/get_user_details_res.dart'
+    hide AgeRangePreference;
 import 'package:dating_app/data/model/response/auth/profile/preference_res_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/profile_req_model.dart';
 import 'package:dating_app/data/model/response/auth/signup/signup_res_model.dart';
@@ -89,8 +91,9 @@ class GoogleAuthNotifier extends AsyncNotifier<LoginResModel?> {
 }
 
 final googleAuthNotifierProvider =
-    AsyncNotifierProvider<GoogleAuthNotifier, LoginResModel?>(() => GoogleAuthNotifier());
-
+    AsyncNotifierProvider<GoogleAuthNotifier, LoginResModel?>(
+      () => GoogleAuthNotifier(),
+    );
 
 // 🔹 Signup------------------------------------------------------------------------------------------------------------
 class SignupNotifier extends AsyncNotifier<SignupResModelModel?> {
@@ -218,7 +221,7 @@ class PreferenceNotifier extends AsyncNotifier<PreferenceResModel?> {
     required List<String>? interests,
     required List<String>? languages,
     required double? distancePreference,
-    required List<int>? ageRangePreference,
+    required AgeRangePreference? ageRangePreference,
     required List<String>? genderPreference,
     required Map<String, dynamic>? location,
     required List<File>? images,
@@ -250,4 +253,39 @@ class PreferenceNotifier extends AsyncNotifier<PreferenceResModel?> {
 final updatePreferenceNotifierProvider =
     AsyncNotifierProvider<PreferenceNotifier, PreferenceResModel?>(
       () => PreferenceNotifier(),
+    );
+
+// 🔹 User Details------------------------------------------------------------------------------------------------------------
+class GetUserDetailsNotifier extends AsyncNotifier<GetUserDetailResModel?> {
+  late final AuthRepository _authRepository;
+
+  @override
+  Future<GetUserDetailResModel?> build() async {
+    // Initialize dependencies
+    _authRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  /// 🔹 Login method
+  Future<void> getUserDetails(String userId) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authRepository.getUserDetails(userId);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      // Caught API model (e.g. {"message": "Incorrect password!"})
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("GET_USER_DETAILS_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("GET_USER_DETAILS_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+}
+
+final getUserDetailsNotifierProvider =
+    AsyncNotifierProvider<GetUserDetailsNotifier, GetUserDetailResModel?>(
+      () => GetUserDetailsNotifier(),
     );

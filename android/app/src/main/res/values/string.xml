@@ -1,3 +1,4 @@
 <resources>
-   <string name="google_client_id">837996602986-nv2kemc0b5haah4fk729nuu9ho0g3to4.apps.googleusercontent.com</string>
+   <!-- <string name="google_client_id">837996602986-nv2kemc0b5haah4fk729nuu9ho0g3to4.apps.googleusercontent.com</string> -->
+   <string name="google_client_id">718004138805-1j6komdbvou74s4pkno02ckosihil8hu.apps.googleusercontent.com</string>
 </resources>

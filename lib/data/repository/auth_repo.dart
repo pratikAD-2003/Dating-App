@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dating_app/data/model/response/auth/login/login_res_model.dart';
+import 'package:dating_app/data/model/response/auth/profile/get_user_details_res.dart' hide AgeRangePreference;
 import 'package:dating_app/data/model/response/auth/profile/preference_res_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/profile_req_model.dart';
 import 'package:dating_app/data/model/response/auth/signup/signup_res_model.dart';
@@ -70,19 +71,21 @@ class AuthRepository {
     required List<String>? interests,
     required List<String>? languages,
     required double? distancePreference,
-    required List<int>? ageRangePreference,
+    required AgeRangePreference? ageRangePreference,
     required List<String>? genderPreference,
     required Map<String, dynamic>? location,
     required List<File>? images,
   }) async {
-    final Map<String, String> data = {
+    final Map<String, dynamic> data = {
       "userId": userId,
-      "interests": jsonEncode(interests ?? []),
-      "languages": jsonEncode(languages ?? []),
-      "distancePreference": distancePreference?.toString() ?? "0",
-      "ageRangePreference": jsonEncode(ageRangePreference ?? []),
-      "genderPreference": jsonEncode(genderPreference ?? []),
-      "location": jsonEncode(location ?? {}),
+      "interests": interests ?? [],
+      "languages": languages ?? [],
+      "distancePreference": distancePreference ?? 0,
+      "ageRangePreference":
+          ageRangePreference?.toJson() ??
+          {"min": 0, "max": 0}, // send as object
+      "genderPreference": genderPreference ?? [],
+      "location": location ?? {},
     };
 
     final rawResponse = await apiClient.putMultipartMultiple(
@@ -119,5 +122,12 @@ class AuthRepository {
       debugPrint("StackTrace: $st");
       return PreferenceResModel(message: "Parsing error: $e");
     }
+  }
+
+  Future<GetUserDetailResModel> getUserDetails(String userId) async {
+    final response = await apiClient.get(
+      "${ApiConstants.getUserDetails}/$userId",
+    );
+    return GetUserDetailResModel.fromJson(response);
   }
 }

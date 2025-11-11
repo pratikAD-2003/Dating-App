@@ -106,17 +106,70 @@ class ApiClient {
   }
 
   /// Multipart for multiple image upload
+  // Future<Map<String, dynamic>> putMultipartMultiple(
+  //   String endpoint,
+  //   Map<String, String> fields,
+  //   List<File>? files,
+  //   String fileFieldName,
+  // ) async {
+  //   final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+  //   final request = http.MultipartRequest('PUT', url);
+
+  //   // Add form fields
+  //   request.fields.addAll(fields);
+
+  //   // Add files (max 5)
+  //   if (files != null && files.isNotEmpty) {
+  //     for (var file in files.take(5)) {
+  //       if (await file.exists()) {
+  //         final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+  //         final multipartFile = await http.MultipartFile.fromPath(
+  //           fileFieldName,
+  //           file.path,
+  //           contentType: MediaType.parse(mimeType),
+  //         );
+  //         request.files.add(multipartFile);
+  //       }
+  //     }
+  //   }
+
+  //   final response = await request.send();
+  //   final body = await response.stream.bytesToString();
+
+  //   if (response.statusCode >= 200 && response.statusCode < 300) {
+  //     try {
+  //       final decoded = jsonDecode(body);
+  //       if (decoded is Map<String, dynamic>) {
+  //         return decoded;
+  //       } else {
+  //         return {"data": decoded, "message": "Parsed as array"};
+  //       }
+  //     } catch (e) {
+  //       // Backend returned a plain string
+  //       return {"message": body};
+  //     }
+  //   } else {
+  //     throw Exception('HTTP ${response.statusCode}: $body');
+  //   }
+  // }
+
   Future<Map<String, dynamic>> putMultipartMultiple(
     String endpoint,
-    Map<String, String> fields,
+    Map<String, dynamic> fields, // <-- dynamic now
     List<File>? files,
     String fileFieldName,
   ) async {
     final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
     final request = http.MultipartRequest('PUT', url);
 
-    // Add form fields
-    request.fields.addAll(fields);
+    // Convert fields to strings
+    fields.forEach((key, value) {
+      if (value is String) {
+        request.fields[key] = value;
+      } else {
+        request.fields[key] = jsonEncode(value); // nested objects
+      }
+    });
 
     // Add files (max 5)
     if (files != null && files.isNotEmpty) {
@@ -145,7 +198,6 @@ class ApiClient {
           return {"data": decoded, "message": "Parsed as array"};
         }
       } catch (e) {
-        // Backend returned a plain string
         return {"message": body};
       }
     } else {

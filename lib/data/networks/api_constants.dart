@@ -19,6 +19,9 @@ class ApiConstants {
   static const String resetPassword = "api/user/auth/resetPassword";
   static const String changePassword = "api/user/auth/changePassword";
 
+  // GET USER DETAILS
+  static const String getUserDetails = "api/user/auth/getUserDetails";
+
   // PROFILE UPDATE
   static const String updateProfile = "api/user/auth/updateProfile";
 
