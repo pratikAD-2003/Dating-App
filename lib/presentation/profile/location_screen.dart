@@ -31,20 +31,11 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
   TextEditingController genderController = TextEditingController();
   TextEditingController distanceController = TextEditingController();
   TextEditingController searchController = TextEditingController();
+  TextEditingController minAgeController = TextEditingController();
+  TextEditingController maxAgeController = TextEditingController();
 
   final List<String> genders = ["Male", "Female", "Non-binary", "Other"];
-  final List<String> allCities = [
-    "Mumbai",
-    "Delhi",
-    "Bengaluru",
-    "Hyderabad",
-    "Chennai",
-    "Pune",
-    "Kolkata",
-    "Jaipur",
-    "Ahmedabad",
-    "Surat",
-  ];
+  List<String> selectedGenders = [];
 
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
@@ -62,29 +53,29 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
 
   void _onSearchChanged() async {
     final query = searchController.text.trim();
-    if (selectedPlace != null) return;
+
+    // If user modifies the text after selecting, clear the selectedPlace
+    if (selectedPlace != null && searchController.text != selectedPlace!.city) {
+      setState(() => selectedPlace = null);
+    }
+
     if (query.isEmpty) {
       _removeOverlay();
-      setState(() => selectedPlace = null);
       return;
     }
 
-    // Show loading overlay while fetching from Mapbox
     _showOverlay(isLoading: true);
 
-    final result = await ref.read(placeSearchProvider(query).future);
+    final suggestions = await ref.read(placeSearchProvider(query).future);
 
-    if (result != null) {
-      setState(() {
-        selectedPlace = result;
-      });
-      _showOverlay();
+    if (suggestions.isNotEmpty && selectedPlace == null) {
+      _showOverlay(suggestions: suggestions);
     } else {
       _removeOverlay();
     }
   }
 
-  void _showOverlay({bool isLoading = false}) {
+  void _showOverlay({bool isLoading = false, List<Location>? suggestions}) {
     _removeOverlay();
     final overlay = Overlay.of(context);
     final renderBox = context.findRenderObject() as RenderBox?;
@@ -110,7 +101,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       ),
                     ),
                   )
-                : selectedPlace == null
+                : (suggestions == null || suggestions.isEmpty)
                 ? Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
@@ -122,44 +113,41 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       ),
                     ),
                   )
-                : InkWell(
-                    onTap: () {
-                      searchController.text = selectedPlace!.city ?? '';
-                      _removeOverlay();
+                : ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: suggestions.length,
+                    itemBuilder: (context, index) {
+                      return InkWell(
+                        onTap: () {
+                          // Set selectedPlace
+                          selectedPlace = suggestions[index];
 
-                      debugPrint("📍 Selected place full data:");
-                      debugPrint(selectedPlace!.toJson().toString());
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            selectedPlace!.city ?? 'Unknown city',
+                          // Update the input field
+                          searchController.text = selectedPlace!.city ?? '';
+
+                          // Hide the overlay after selection
+                          _removeOverlay();
+
+                          debugPrint(
+                            "📍 Selected place: ${selectedPlace!.toJson()}",
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            suggestions[index].city ?? 'Unknown location',
                             style: TextStyle(
                               color: MyColors.textColor(context),
                               fontSize: 16,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            selectedPlace!.country ?? '',
-                            style: TextStyle(
-                              color: MyColors.textColor(
-                                context,
-                              ).withOpacity(0.7),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
           ),
         ),
@@ -256,7 +244,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SkipText(
-                        text: 'Skip',
+                        text: '',
                         backEnable: true,
                         onClick: () {},
                         onBackClick: () {
@@ -280,7 +268,16 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                         child: Column(
                           spacing: 10,
                           children: [
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                MyBoldText(
+                                  text: 'Gallery Images (optional). (max-5)',
+                                  color: MyColors.textColor(context),
+                                  fontSize: 16,
+                                ),
+                              ],
+                            ),
                             MultiImagePickerWidget(
                               maxImages: 5,
                               onImagesChanged: (image) {
@@ -293,16 +290,30 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                             CompositedTransformTarget(
                               link: _layerLink,
                               child: MySearchField(
+                                icon: "assets/images/location.png",
                                 controller: searchController,
                                 hintText: 'Search your city',
                               ),
                             ),
                             SizedBox.shrink(),
-                            MyDropdown(
+                            Row(
+                              children: [
+                                MyBoldText(
+                                  text: 'Age Preference (optional)',
+                                  color: MyColors.textColor(context),
+                                  fontSize: 16,
+                                ),
+                              ],
+                            ),
+                            SizedBox.shrink(),
+                            MyMultiSelectDropdown(
                               hint: 'Gender Preference',
                               options: genders,
-                              onSelected: (selected) {
-                                genderController.text = selected;
+                              initialValues: selectedGenders,
+                              onSelected: (selectedList) {
+                                setState(() {
+                                  selectedGenders = selectedList;
+                                });
                               },
                             ),
                             SizedBox.shrink(),
@@ -314,6 +325,44 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                                 return text.isNotEmpty;
                               },
                             ),
+                            SizedBox.shrink(),
+                            Row(
+                              children: [
+                                MyBoldText(
+                                  text: 'Age Preference (optional)',
+                                  color: MyColors.textColor(context),
+                                  fontSize: 16,
+                                ),
+                              ],
+                            ),
+                            SizedBox.shrink(),
+                            MyInputField(
+                              controller: minAgeController,
+                              hintText: 'Min Age.(18+)',
+                              digitOnly: true,
+                              condition: (text) {
+                                if (text.isEmpty)
+                                  return false; // invalid if empty
+                                final value = int.tryParse(text);
+                                if (value == null)
+                                  return false; // invalid if not a number
+                                return value >= 18 &&
+                                    value <= 50; // min/max age range
+                              },
+                            ),
+                            SizedBox.shrink(),
+                            MyInputField(
+                              controller: maxAgeController,
+                              hintText: 'Max Age.(50-)',
+                              digitOnly: true,
+                              condition: (text) {
+                                if (text.isEmpty) return false;
+                                final value = int.tryParse(text);
+                                if (value == null) return false;
+                                return value >= 18 && value <= 50;
+                              },
+                            ),
+                            SizedBox.shrink(),
                             SizedBox.shrink(),
                           ],
                         ),
@@ -340,10 +389,10 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                               distanceController.text,
                             ),
                             ageRangePreference: AgeRangePreference(
-                              min: 18,
-                              max: 40,
+                              min: double.parse(minAgeController.text).toInt(),
+                              max: double.parse(maxAgeController.text).toInt(),
                             ),
-                            genderPreference: [genderController.text],
+                            genderPreference: selectedGenders,
                             location: Location(
                               type: "Point",
                               city: selectedPlace?.city,

@@ -21,6 +21,8 @@ class ApiConstants {
 
   // GET USER DETAILS
   static const String getUserDetails = "api/user/auth/getUserDetails";
+  static const String updateLanguage = "api/user/auth/updateLanguages";
+  static const String updateInterest = "api/user/auth/updateInterests";
 
   // PROFILE UPDATE
   static const String updateProfile = "api/user/auth/updateProfile";

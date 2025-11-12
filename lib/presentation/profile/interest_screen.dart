@@ -63,7 +63,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SkipText(
-                        text: 'Skip',
+                        text: '',
                         backEnable: true,
                         onClick: () {},
                         onBackClick: () {

@@ -1,8 +1,6 @@
-import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
-import 'package:dating_app/presentation/user/user_detail_screen.dart';
 import 'package:flutter/material.dart';
 
 class MyMessagesScreen extends StatelessWidget {
@@ -67,10 +65,8 @@ class MyMessageChatsSection extends StatelessWidget {
             itemCount: 10,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) => Padding(
-              padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
-              child: ChatUserCard(),
-            ),
+            itemBuilder: (context, index) =>
+                ChatUserCard(onClick: () {}, onStoryClick: () {}),
           ),
         ],
       ),
@@ -79,73 +75,86 @@ class MyMessageChatsSection extends StatelessWidget {
 }
 
 class ChatUserCard extends StatelessWidget {
-  const ChatUserCard({super.key});
+  const ChatUserCard({
+    super.key,
+    required this.onStoryClick,
+    required this.onClick,
+  });
+  final VoidCallback onStoryClick;
+  final VoidCallback onClick;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      spacing: 10,
-      children: [
-        StoryCircularCard(size: 55),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 2,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return InkWell(
+      onTap: () => onClick(),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 15, 0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          spacing: 10,
+          children: [
+            StoryCircularCard(size: 55, onClick: () => onStoryClick()),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                spacing: 2,
                 children: [
-                  MyBoldText(
-                    text: 'Emma',
-                    color: MyColors.textColor(context),
-                    fontSize: 16,
-                    textAlign: TextAlign.center,
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      MyBoldText(
+                        text: 'Emma',
+                        color: MyColors.textColor(context),
+                        fontSize: 16,
+                        textAlign: TextAlign.center,
+                      ),
+                      MyRegularText(
+                        text: '23 min',
+                        color: MyColors.hintColor(context),
+                        fontSize: 14,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                  MyRegularText(
-                    text: '23 min',
-                    color: MyColors.hintColor(context),
-                    fontSize: 14,
-                    textAlign: TextAlign.center,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      MyRegularText(
+                        text: 'Hii',
+                        color: MyColors.textColor(context),
+                        fontSize: 15,
+                        textAlign: TextAlign.center,
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          color: MyColors.constTheme,
+                        ),
+                        height: 22,
+                        width: 22,
+                        child: MyBoldText(
+                          text: '10',
+                          color: MyColors.constWhite,
+                          fontSize: 14,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  MyRegularText(
-                    text: 'Hii',
-                    color: MyColors.textColor(context),
-                    fontSize: 15,
-                    textAlign: TextAlign.center,
-                  ),
+                  SizedBox(height: 10),
                   Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                      color: MyColors.constTheme,
-                    ),
-                    height: 22,
-                    width: 22,
-                    child: MyBoldText(
-                      text: '10',
-                      color: MyColors.constWhite,
-                      fontSize: 14,
-                      textAlign: TextAlign.center,
-                    ),
+                    height: 0.5,
+                    width: double.infinity,
+                    color: MyColors.hintColor(context),
                   ),
                 ],
               ),
-              SizedBox(height: 10),
-              Container(
-                height: 0.5,
-                width: double.infinity,
-                color: MyColors.hintColor(context),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -178,7 +187,9 @@ class MyMessageActivitySection extends StatelessWidget {
                   right: 12.0,
                   left: index == 0 ? 20 : 0,
                 ),
-                child: StoryCard(),
+                child: index == 0
+                    ? MyStoryCard(onStoryClick: () {}, onStoryAddClick: () {})
+                    : StoryCard(),
               ),
             ),
           ),
@@ -203,19 +214,19 @@ class MyMessageAppBarSection extends StatelessWidget {
             color: MyColors.textColor(context),
             fontSize: 28,
           ),
-          MyIconButton(
-            icon: 'assets/images/filter.png',
-            padding: 12,
-            size: 20,
-            onClick: () => {
-              Navigator.push(
-                context,
-                // MaterialPageRoute(builder: (context) => ChatScreen()),
-                // MaterialPageRoute(builder: (context) => StoryScreen()),
-                MaterialPageRoute(builder: (context) => UserDetailScreen()),
-              ),
-            },
-          ),
+          // MyIconButton(
+          //   icon: 'assets/images/filter.png',
+          //   padding: 12,
+          //   size: 20,
+          //   onClick: () => {
+          //     Navigator.push(
+          //       context,
+          //       // MaterialPageRoute(builder: (context) => ChatScreen()),
+          //       // MaterialPageRoute(builder: (context) => StoryScreen()),
+          //       MaterialPageRoute(builder: (context) => UserDetailScreen()),
+          //     ),
+          //   },
+          // ),
         ],
       ),
     );
@@ -232,7 +243,7 @@ class StoryCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       spacing: 2,
       children: [
-        StoryCircularCard(size: 65),
+        StoryCircularCard(size: 60, onClick: () {}),
         MyBoldText(
           text: 'Emma',
           color: MyColors.textColor(context),
@@ -244,39 +255,100 @@ class StoryCard extends StatelessWidget {
   }
 }
 
-class StoryCircularCard extends StatelessWidget {
-  const StoryCircularCard({super.key, this.size = 60, this.border = 2.4});
-  final double size;
-  final double border;
+class MyStoryCard extends StatelessWidget {
+  const MyStoryCard({
+    super.key,
+    required this.onStoryClick,
+    required this.onStoryAddClick,
+  });
+  final VoidCallback onStoryClick;
+  final VoidCallback onStoryAddClick;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(50),
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFF27121), // purple
-            Color(0xFFE94057), // pink
-            Color(0xFF8A2387), // pink
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      spacing: 2,
+      children: [
+        Stack(
+          children: [
+            Positioned(
+              child: StoryCircularCard(size: 65, onClick: () => onStoryClick()),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(50),
+                onTap: () => onStoryAddClick(),
+                child: Container(
+                  height: 30,
+                  width: 30,
+                  decoration: BoxDecoration(
+                    color: MyColors.constTheme,
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Icon(Icons.add, color: MyColors.constWhite),
+                ),
+              ),
+            ),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
-      ),
-      padding: EdgeInsets.all(border),
+        MyBoldText(
+          text: 'My Story',
+          color: MyColors.textColor(context),
+          fontSize: 16,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class StoryCircularCard extends StatelessWidget {
+  const StoryCircularCard({
+    super.key,
+    this.size = 60,
+    this.border = 2.4,
+    required this.onClick,
+  });
+  final double size;
+  final double border;
+  final VoidCallback onClick;
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => onClick(),
+      borderRadius: BorderRadius.circular(50),
       child: Container(
-        padding: EdgeInsets.all(2.5),
         decoration: BoxDecoration(
-          color: MyColors.background(context),
           borderRadius: BorderRadius.circular(50),
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFF27121), // purple
+              Color(0xFFE94057), // pink
+              Color(0xFF8A2387), // pink
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(50),
-          child: Image.asset(
-            'assets/images/m2.jpg',
-            fit: BoxFit.cover,
-            height: size,
-            width: size,
+        padding: EdgeInsets.all(border),
+        child: Container(
+          padding: EdgeInsets.all(2.5),
+          decoration: BoxDecoration(
+            color: MyColors.background(context),
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(50),
+            child: Image.asset(
+              'assets/images/m2.jpg',
+              fit: BoxFit.cover,
+              height: size,
+              width: size,
+            ),
           ),
         ),
       ),

@@ -162,7 +162,7 @@ class StoryTopBar extends StatelessWidget {
                 Row(
                   spacing: 6,
                   children: [
-                    const StoryCircularCard(size: 50),
+                    StoryCircularCard(size: 50, onClick: () {}),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

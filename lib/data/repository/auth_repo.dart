@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dating_app/data/model/response/auth/login/login_res_model.dart';
-import 'package:dating_app/data/model/response/auth/profile/get_user_details_res.dart' hide AgeRangePreference;
+import 'package:dating_app/data/model/response/auth/profile/get_user_details_res.dart'
+    hide AgeRangePreference;
 import 'package:dating_app/data/model/response/auth/profile/preference_res_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/profile_req_model.dart';
+import 'package:dating_app/data/model/response/auth/profile/update_interest_res_model.dart';
+import 'package:dating_app/data/model/response/auth/profile/update_language_res_model.dart';
 import 'package:dating_app/data/model/response/auth/signup/signup_res_model.dart';
 import 'package:dating_app/data/networks/api_client.dart';
 import 'package:dating_app/data/networks/api_constants.dart';
@@ -53,14 +56,14 @@ class AuthRepository {
       "dateOfBirth": dateOfBirth,
       "gender": gender,
       "bio": bio,
+      // Don't add "profilePhotoUrl" if file is null
     };
 
-    // ✅ This will send the image only when selected
     final response = await apiClient.putMultipart(
       ApiConstants.updateProfile,
       data,
-      profilePhotoFile, // null => no image, not sent
-      "profilePhotoUrl", // must match backend field
+      profilePhotoFile, // will only send if not null
+      "profilePhotoUrl", // backend field for the file
     );
 
     return ProfileResModel.fromJson(response);
@@ -83,7 +86,7 @@ class AuthRepository {
       "distancePreference": distancePreference ?? 0,
       "ageRangePreference":
           ageRangePreference?.toJson() ??
-          {"min": 0, "max": 0}, // send as object
+          {"min": 18, "max": 50}, // send as object
       "genderPreference": genderPreference ?? [],
       "location": location ?? {},
     };
@@ -129,5 +132,25 @@ class AuthRepository {
       "${ApiConstants.getUserDetails}/$userId",
     );
     return GetUserDetailResModel.fromJson(response);
+  }
+
+  Future<UpdateInterestResModel> updateInterests(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await apiClient.putRequest(
+      ApiConstants.updateInterest,
+      data,
+    );
+    return UpdateInterestResModel.fromJson(response);
+  }
+
+  Future<UpdateIanguageResModel> updateLanguage(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await apiClient.putRequest(
+      ApiConstants.updateLanguage,
+      data,
+    );
+    return UpdateIanguageResModel.fromJson(response);
   }
 }

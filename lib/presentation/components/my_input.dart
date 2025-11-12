@@ -417,8 +417,10 @@ class MyDropdown extends StatefulWidget {
     required this.hint,
     required this.options,
     required this.onSelected,
+    this.initialValue,
   });
   final String hint;
+  final String? initialValue;
   final List<String> options;
   final Function(String selected) onSelected;
   @override
@@ -433,6 +435,7 @@ class _MyDropdownState extends State<MyDropdown> {
     return DropdownButtonFormField<String>(
       value: selectedGender,
       isExpanded: true,
+      initialValue: widget.initialValue,
       style: TextStyle(
         color: MyColors.textColor(context),
         fontFamily: 'sk',
@@ -509,10 +512,12 @@ class MySearchField extends StatefulWidget {
     this.maxLine = 1,
     this.maxLength = -1,
     this.digitOnly = false,
+    this.icon = "assets/images/search.png",
   });
 
   final TextEditingController controller;
   final String hintText;
+  final String icon;
   final String? labelText;
   final bool onRead;
   final int maxLine;
@@ -561,7 +566,7 @@ class _MySearchFieldState extends State<MySearchField> {
                 right: 10,
               ), // 👈 your custom padding
               child: Image.asset(
-                'assets/images/search.png',
+                widget.icon,
                 height: 22,
                 width: 22,
                 color: MyColors.hintColor(context),
@@ -664,6 +669,174 @@ class MyChatInputField extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class MyMultiSelectDropdown extends StatefulWidget {
+  const MyMultiSelectDropdown({
+    super.key,
+    required this.hint,
+    required this.options,
+    required this.onSelected,
+    this.initialValues,
+  });
+
+  final String hint;
+  final List<String> options;
+  final List<String>? initialValues;
+  final Function(List<String> selected) onSelected;
+
+  @override
+  State<MyMultiSelectDropdown> createState() => _MyMultiSelectDropdownState();
+}
+
+class _MyMultiSelectDropdownState extends State<MyMultiSelectDropdown> {
+  List<String> selectedItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialValues != null) {
+      selectedItems = List.from(widget.initialValues!);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        final results = await showDialog<List<String>>(
+          context: context,
+          builder: (_) => _MultiSelectDialog(
+            options: widget.options,
+            initiallySelected: selectedItems,
+          ),
+        );
+
+        if (results != null) {
+          setState(() => selectedItems = results);
+          widget.onSelected(selectedItems);
+        }
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: TextStyle(
+            color: MyColors.hintColor(context),
+            fontFamily: 'sk',
+            fontWeight: FontWeight.w400,
+            fontSize: 16,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(17),
+            borderSide: BorderSide(
+              color: MyColors.borderColor(context),
+              width: 1,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(17),
+            borderSide: BorderSide(
+              color: MyColors.borderColor(context),
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(17),
+            borderSide: BorderSide(
+              color: MyColors.borderColor(context),
+              width: 1.2,
+            ),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                selectedItems.isEmpty ? widget.hint : selectedItems.join(', '),
+                style: TextStyle(
+                  color: selectedItems.isEmpty
+                      ? MyColors.hintColor(context)
+                      : MyColors.textColor(context),
+                  fontFamily: 'sk',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 18,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(
+              Icons.arrow_drop_down_outlined,
+              color: MyColors.hintColor(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MultiSelectDialog extends StatefulWidget {
+  const _MultiSelectDialog({
+    required this.options,
+    required this.initiallySelected,
+  });
+
+  final List<String> options;
+  final List<String> initiallySelected;
+
+  @override
+  State<_MultiSelectDialog> createState() => _MultiSelectDialogState();
+}
+
+class _MultiSelectDialogState extends State<_MultiSelectDialog> {
+  late List<String> tempSelected;
+
+  @override
+  void initState() {
+    super.initState();
+    tempSelected = List.from(widget.initiallySelected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Options'),
+      content: SingleChildScrollView(
+        child: ListBody(
+          children: widget.options.map((option) {
+            return CheckboxListTile(
+              value: tempSelected.contains(option),
+              title: Text(option),
+              onChanged: (checked) {
+                setState(() {
+                  if (checked == true) {
+                    tempSelected.add(option);
+                  } else {
+                    tempSelected.remove(option);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, null),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, tempSelected),
+          child: const Text('OK'),
         ),
       ],
     );

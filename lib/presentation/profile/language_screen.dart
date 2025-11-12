@@ -64,7 +64,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SkipText(
-                        text: 'Skip',
+                        text: '',
                         backEnable: true,
                         onClick: () {},
                         onBackClick: () {

@@ -7,8 +7,14 @@ final placeRepositoryProvider = Provider<PlaceRepository>((ref) {
   return PlaceRepository(Utils.mapbox);
 });
 
+// final placeSearchProvider =
+//     FutureProvider.family<Location?, String>((ref, query) async {
+//   final repo = ref.read(placeRepositoryProvider);
+//   return repo.searchPlace(query);
+// });
+
 final placeSearchProvider =
-    FutureProvider.family<Location?, String>((ref, query) async {
+    FutureProvider.family<List<Location>, String>((ref, query) async {
   final repo = ref.read(placeRepositoryProvider);
-  return repo.searchPlace(query);
+  return repo.searchPlaces(query);
 });

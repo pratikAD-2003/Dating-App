@@ -6,6 +6,8 @@ import 'package:dating_app/data/model/response/auth/profile/get_user_details_res
     hide AgeRangePreference;
 import 'package:dating_app/data/model/response/auth/profile/preference_res_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/profile_req_model.dart';
+import 'package:dating_app/data/model/response/auth/profile/update_interest_res_model.dart';
+import 'package:dating_app/data/model/response/auth/profile/update_language_res_model.dart';
 import 'package:dating_app/data/model/response/auth/signup/signup_res_model.dart';
 import 'package:dating_app/data/networks/api_client.dart';
 import 'package:dating_app/data/repository/auth_repo.dart';
@@ -288,4 +290,73 @@ class GetUserDetailsNotifier extends AsyncNotifier<GetUserDetailResModel?> {
 final getUserDetailsNotifierProvider =
     AsyncNotifierProvider<GetUserDetailsNotifier, GetUserDetailResModel?>(
       () => GetUserDetailsNotifier(),
+    );
+
+// 🔹 Update Language------------------------------------------------------------------------------------------------------------
+class UpdateLanguageNotifier extends AsyncNotifier<UpdateIanguageResModel?> {
+  late final AuthRepository _authRepository;
+
+  @override
+  Future<UpdateIanguageResModel?> build() async {
+    // Initialize dependencies
+    _authRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  Future<void> updateLanguage(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authRepository.updateLanguage(data);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      // Caught API model (e.g. {"message": "Incorrect password!"})
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("UPDATE_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("UPDATE_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+}
+
+final updateLanguageNotifierProvider =
+    AsyncNotifierProvider<UpdateLanguageNotifier, UpdateIanguageResModel?>(
+      () => UpdateLanguageNotifier(),
+    );
+
+
+// 🔹 Update Interest------------------------------------------------------------------------------------------------------------
+class UpdateInterestNotifier extends AsyncNotifier<UpdateInterestResModel?> {
+  late final AuthRepository _authRepository;
+
+  @override
+  Future<UpdateInterestResModel?> build() async {
+    // Initialize dependencies
+    _authRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  Future<void> updateInterest(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authRepository.updateInterests(data);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      // Caught API model (e.g. {"message": "Incorrect password!"})
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("UPDATE_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("UPDATE_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+}
+
+final updateInterestNotifierProvider =
+    AsyncNotifierProvider<UpdateInterestNotifier, UpdateInterestResModel?>(
+      () => UpdateInterestNotifier(),
     );

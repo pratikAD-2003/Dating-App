@@ -206,7 +206,7 @@ class ChatScreenAppBarSection extends StatelessWidget {
                   color: MyColors.constTheme,
                 ),
               ),
-              StoryCircularCard(size: 45),
+              StoryCircularCard(size: 45, onClick: () {}),
               SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

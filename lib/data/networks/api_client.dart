@@ -79,19 +79,29 @@ class ApiClient {
     });
 
     // ✅ add file only if selected
-    if (file != null && await file.exists()) {
-      final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
-      final fileStream = http.ByteStream(file.openRead());
-      final fileLength = await file.length();
+    // if (file != null && await file.exists()) {
+    //   final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+    //   final fileStream = http.ByteStream(file.openRead());
+    //   final fileLength = await file.length();
 
+    //   final multipartFile = http.MultipartFile(
+    //     fileFieldName,
+    //     fileStream,
+    //     fileLength,
+    //     filename: file.path.split('/').last,
+    //     contentType: MediaType.parse(mimeType),
+    //   );
+
+    //   request.files.add(multipartFile);
+    // }
+    if (file != null && await file.exists()) {
       final multipartFile = http.MultipartFile(
         fileFieldName,
-        fileStream,
-        fileLength,
+        http.ByteStream(file.openRead()),
+        await file.length(),
         filename: file.path.split('/').last,
-        contentType: MediaType.parse(mimeType),
+        contentType: MediaType.parse(lookupMimeType(file.path) ?? 'image/jpeg'),
       );
-
       request.files.add(multipartFile);
     }
 

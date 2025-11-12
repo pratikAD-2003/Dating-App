@@ -336,7 +336,12 @@ class _HomeCardLyState extends State<HomeCardLy> {
                             MyBoldText(
                               text: "${widget.name}, ${widget.age}",
                               color: MyColors.constWhite,
-                              fontSize: 26,
+                              fontSize: 24,
+                            ),
+                            MyRegularText(
+                              text: "Software Engineer",
+                              color: MyColors.constWhite,
+                              fontSize: 16,
                             ),
                           ],
                         ),

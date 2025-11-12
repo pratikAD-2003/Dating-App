@@ -2,6 +2,50 @@ import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
 
+// class MyButton extends StatelessWidget {
+//   const MyButton({
+//     super.key,
+//     required this.text,
+//     required this.onClick,
+//     this.enabled = true,
+//     this.isLoading = false,
+//   });
+
+//   final String text;
+//   final VoidCallback onClick;
+//   final bool isLoading;
+//   final bool enabled;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Material(
+//       color: enabled ? Color(0xFF151515) : Color(0xFFc4c4c4),
+//       borderRadius: BorderRadius.circular(15),
+//       child: InkWell(
+//         onTap: enabled && !isLoading ? onClick : null,
+//         borderRadius: BorderRadius.circular(15),
+//         child: Container(
+//           width: double.infinity,
+//           alignment: AlignmentGeometry.center,
+//           padding: EdgeInsets.symmetric(vertical: 18),
+//           decoration: BoxDecoration(
+//             color: MyColors.constTheme,
+//             borderRadius: BorderRadius.circular(15),
+//             border: null,
+//           ),
+//           child: isLoading
+//               ? SizedBox(
+//                   height: 26,
+//                   width: 26,
+//                   child: CircularProgressIndicator(color: Colors.white),
+//                 )
+//               : MyBoldText(text: text, fontSize: 16, color: Colors.white),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 class MyButton extends StatelessWidget {
   const MyButton({
     super.key,
@@ -18,28 +62,34 @@ class MyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: enabled ? Color(0xFF151515) : Color(0xFFc4c4c4),
-      borderRadius: BorderRadius.circular(15),
-      child: InkWell(
-        onTap: enabled && !isLoading ? onClick : null,
-        borderRadius: BorderRadius.circular(15),
-        child: Container(
-          width: double.infinity,
-          alignment: AlignmentGeometry.center,
-          padding: EdgeInsets.symmetric(vertical: 18),
-          decoration: BoxDecoration(
-            color: MyColors.constTheme,
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.5,
+      child: IgnorePointer(
+        // disables touch completely
+        ignoring: !enabled || isLoading,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+          child: InkWell(
+            onTap: enabled && !isLoading ? onClick : null,
             borderRadius: BorderRadius.circular(15),
-            border: null,
+            child: Container(
+              width: double.infinity,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                color: MyColors.constTheme,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: isLoading
+                  ? const SizedBox(
+                      height: 26,
+                      width: 26,
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : MyBoldText(text: text, fontSize: 16, color: Colors.white),
+            ),
           ),
-          child: isLoading
-              ? SizedBox(
-                  height: 26,
-                  width: 26,
-                  child: CircularProgressIndicator(color: Colors.white),
-                )
-              : MyBoldText(text: text, fontSize: 16, color: Colors.white),
         ),
       ),
     );

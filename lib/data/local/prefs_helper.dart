@@ -86,6 +86,16 @@ class PrefsHelper {
     if (languages != null) await prefs.setStringList(_keyLanguages, languages);
   }
 
+  static Future<void> saveInterests({List<String>? interests}) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (interests != null) await prefs.setStringList(_keyInterests, interests);
+  }
+
+  static Future<void> saveIanguage({List<String>? languages}) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (languages != null) await prefs.setStringList(_keyLanguages, languages);
+  }
+
   static Future<int?> getAgeMin() async =>
       (await SharedPreferences.getInstance()).getInt(_keyAgeMin);
   static Future<int?> getAgeMax() async =>

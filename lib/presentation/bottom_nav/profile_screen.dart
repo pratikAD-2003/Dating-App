@@ -3,10 +3,11 @@ import 'package:dating_app/data/local/prefs_helper.dart';
 import 'package:dating_app/data/riverpod/auth_notifier.dart';
 import 'package:dating_app/presentation/auth/onboarding_screen.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
+import 'package:dating_app/presentation/components/my_dialog.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/profile/edit/edit_interest.dart';
 import 'package:dating_app/presentation/profile/edit/edit_language.dart';
-import 'package:dating_app/presentation/profile/edit/edit_preferences.dart';
+import 'package:dating_app/presentation/profile/edit/edit_location.dart';
 import 'package:dating_app/presentation/profile/edit/edit_profile.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
@@ -150,7 +151,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => EditPreferences(),
+                                  builder: (context) => EditLocation(),
                                 ),
                               );
                             },
@@ -204,14 +205,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             icon: 'assets/images/logout.png',
                             text: 'Logout',
                             onClick: () async {
-                              await PrefsHelper.clearAll();
-                              await googleSignInManager.signOut();
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => OnboardingScreen(),
+                              showDialog(
+                                context: context,
+                                builder: (_) => MyAlertDialog(
+                                  title: "Logged out",
+                                  subtitle: "Are you sure you want to logout?",
+                                  btn1Text: "Cancel",
+                                  btn2Text: "Logout",
+                                  onBtn2Tap: () async {
+                                    await PrefsHelper.clearAll();
+                                    await googleSignInManager.signOut();
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            OnboardingScreen(),
+                                      ),
+                                      (Route<dynamic> route) => false,
+                                    );
+                                  },
                                 ),
-                                (Route<dynamic> route) => false,
                               );
                             },
                           ),
@@ -306,9 +319,9 @@ class ProfileDetailSection extends StatelessWidget {
             border: null,
           ),
           clipBehavior: Clip.antiAlias,
-          child: image != null
+          child: (image?.isNotEmpty == true
               ? Image.network(image!, fit: BoxFit.cover)
-              : Image.asset('assets/images/m2.jpg', fit: BoxFit.cover),
+              : Image.asset('assets/images/m2.jpg', fit: BoxFit.cover)),
         ),
         const SizedBox(height: 15),
         MyBoldText(

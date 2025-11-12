@@ -146,7 +146,7 @@ class _UpdateProfileState extends ConsumerState<UpdateProfile> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SkipText(
-                        text: 'Skip',
+                        text: '',
                         backEnable: false,
                         onClick: () {},
                         onBackClick: () {
@@ -271,11 +271,11 @@ class ProfileCard extends StatelessWidget {
             width: 130,
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(25)),
             clipBehavior: Clip.antiAlias,
-            child: selectedImage != null
+            child: (selectedImage != null && selectedImage!.path.isNotEmpty)
                 ? Image.file(selectedImage!, fit: BoxFit.cover)
-                : networkImageUrl != null
-                ? Image.network(networkImageUrl!, fit: BoxFit.cover)
-                : Image.asset('assets/images/m1.png', fit: BoxFit.cover),
+                : (networkImageUrl?.isNotEmpty == true
+                      ? Image.network(networkImageUrl!, fit: BoxFit.cover)
+                      : Image.asset('assets/images/m2.jpg', fit: BoxFit.cover)),
           ),
         ),
         Positioned(
