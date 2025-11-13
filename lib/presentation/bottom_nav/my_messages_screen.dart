@@ -1,9 +1,11 @@
 import 'package:dating_app/data/local/prefs_helper.dart';
 import 'package:dating_app/data/model/response/chat/get_chat_user_res_model.dart';
 import 'package:dating_app/data/riverpod/chat_notifier.dart';
+import 'package:dating_app/data/riverpod/story_notifier.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
+import 'package:dating_app/presentation/user/story_screen.dart';
 import 'package:dating_app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,7 +63,7 @@ class _MyMessagesScreenState extends State<MyMessagesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          MyMessageActivitySection(),
+                          MyMessageActivitySection(userId: userId ?? ""),
                           MyMessageChatsSection(userId: userId ?? ""),
                         ],
                       ),
@@ -147,6 +149,7 @@ class _MyMessageChatsSectionState extends ConsumerState<MyMessageChatsSection> {
             data: (chats) => ListView.builder(
               itemCount: chats.length,
               shrinkWrap: true,
+              controller: _controller,
               itemBuilder: (_, i) {
                 final chat = chats[i];
                 return ChatUserCard(
@@ -259,42 +262,126 @@ class ChatUserCard extends StatelessWidget {
   }
 }
 
-class MyMessageActivitySection extends StatelessWidget {
-  const MyMessageActivitySection({super.key});
+class MyMessageActivitySection extends ConsumerStatefulWidget {
+  const MyMessageActivitySection({super.key, required this.userId});
+  final String userId;
+  @override
+  ConsumerState<MyMessageActivitySection> createState() =>
+      _MyMessageActivitySectionState();
+}
+
+class _MyMessageActivitySectionState
+    extends ConsumerState<MyMessageActivitySection> {
+  final ScrollController _controller = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ initial fetch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(storyNotifierProvider.notifier).fetchStories(widget.userId);
+    });
+
+    // ✅ pagination listener
+    _controller.addListener(() {
+      if (_controller.position.pixels >=
+          _controller.position.maxScrollExtent - 100) {
+        final notifier = ref.read(storyNotifierProvider.notifier);
+        notifier.fetchStories(widget.userId);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 20.0),
-            child: MyBoldText(
-              text: 'Activities',
-              color: MyColors.textColor(context),
-              fontSize: 20,
-            ),
-          ),
-          SizedBox(
-            height: 120,
-            child: ListView.builder(
-              itemCount: 10,
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (context, index) => Padding(
-                padding: EdgeInsets.only(
-                  right: 12.0,
-                  left: index == 0 ? 20 : 0,
-                ),
-                child: index == 0
-                    ? MyStoryCard(onStoryClick: () {}, onStoryAddClick: () {})
-                    : StoryCard(),
+    final storyState = ref.watch(storyNotifierProvider);
+    ref.listen(storyNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) async {},
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
               ),
             ),
-          ),
-        ],
+          );
+        },
+      );
+    });
+
+    return storyState.when(
+      data: (data) => Padding(
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 20.0),
+              child: MyBoldText(
+                text: 'Activities',
+                color: MyColors.textColor(context),
+                fontSize: 20,
+              ),
+            ),
+            SizedBox(
+              height: 120,
+              child: ListView.builder(
+                itemCount: data.length,
+                scrollDirection: Axis.horizontal,
+                controller: _controller,
+                itemBuilder: (context, index) => Padding(
+                  padding: EdgeInsets.only(
+                    right: 12.0,
+                    left: index == 0 ? 20 : 0,
+                  ),
+                  child: index == 0
+                      ? MyStoryCard(
+                          imageUrl: data[index].profilePhotoUrl ?? "",
+                          isSeen: data[index].isSeen ?? true,
+                          onStoryClick: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StoryScreen(
+                                  userId: data[index].userId ?? "",
+                                ),
+                              ),
+                            );
+                          },
+                          onStoryAddClick: () {},
+                        )
+                      : StoryCard(
+                          name: data[index].fullName ?? "N/A",
+                          imageUrl: data[index].profilePhotoUrl ?? "",
+                          isSeen: data[index].isSeen ?? true,
+                          onClick: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StoryScreen(
+                                  userId: data[index].userId ?? "",
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Center(child: Text(err.toString())),
     );
   }
 }
@@ -334,23 +421,45 @@ class MyMessageAppBarSection extends StatelessWidget {
 }
 
 class StoryCard extends StatelessWidget {
-  const StoryCard({super.key});
+  const StoryCard({
+    super.key,
+    required this.name,
+    required this.imageUrl,
+    required this.isSeen,
+    required this.onClick,
+  });
+  final String name;
+
+  final String imageUrl;
+  final bool isSeen;
+  final VoidCallback onClick;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      spacing: 2,
-      children: [
-        StoryCircularCard(size: 60, onClick: () {}),
-        MyBoldText(
-          text: 'Emma',
-          color: MyColors.textColor(context),
-          fontSize: 16,
-          textAlign: TextAlign.center,
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 2,
+        children: [
+          StoryCircularCard(
+            size: 60,
+            imageUrl: imageUrl,
+            isSeenStory: isSeen,
+            onClick: () => onClick(),
+          ),
+          SizedBox(
+            width: 65,
+            child: MyBoldText(
+              text: name,
+              color: MyColors.textColor(context),
+              fontSize: 16,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -358,9 +467,13 @@ class StoryCard extends StatelessWidget {
 class MyStoryCard extends StatelessWidget {
   const MyStoryCard({
     super.key,
+    required this.imageUrl,
+    required this.isSeen,
     required this.onStoryClick,
     required this.onStoryAddClick,
   });
+  final String imageUrl;
+  final bool isSeen;
   final VoidCallback onStoryClick;
   final VoidCallback onStoryAddClick;
 
@@ -374,7 +487,12 @@ class MyStoryCard extends StatelessWidget {
         Stack(
           children: [
             Positioned(
-              child: StoryCircularCard(size: 65, onClick: () => onStoryClick()),
+              child: StoryCircularCard(
+                size: 65,
+                imageUrl: imageUrl,
+                isSeenStory: isSeen,
+                onClick: () => onStoryClick(),
+              ),
             ),
             Positioned(
               right: 0,
