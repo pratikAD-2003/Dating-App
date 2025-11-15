@@ -1,5 +1,6 @@
 import 'package:dating_app/data/local/prefs_helper.dart';
 import 'package:dating_app/data/model/response/chat/get_chat_user_res_model.dart';
+import 'package:dating_app/data/model/response/socket/story/story_model.dart';
 import 'package:dating_app/data/riverpod/chat_notifier.dart';
 import 'package:dating_app/data/riverpod/story_notifier.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
@@ -277,18 +278,10 @@ class _MyMessageActivitySectionState
   @override
   void initState() {
     super.initState();
-    // ✅ initial fetch
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(storyNotifierProvider.notifier).fetchStories(widget.userId);
-    });
 
-    // ✅ pagination listener
-    _controller.addListener(() {
-      if (_controller.position.pixels >=
-          _controller.position.maxScrollExtent - 100) {
-        final notifier = ref.read(storyNotifierProvider.notifier);
-        notifier.fetchStories(widget.userId);
-      }
+    // Initial fetch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(storyNotifierProvider(widget.userId).notifier).loadStories();
     });
   }
 
@@ -300,85 +293,92 @@ class _MyMessageActivitySectionState
 
   @override
   Widget build(BuildContext context) {
-    final storyState = ref.watch(storyNotifierProvider);
-    ref.listen(storyNotifierProvider, (previous, next) {
-      next.whenOrNull(
-        data: (user) async {},
-        error: (err, st) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: MyBoldText(
-                text: '$err',
-                fontSize: 16,
-                color: MyColors.themeColor(context),
+    // ✅ Pass the userId to watch the family provider
+    final storyState = ref.watch(storyNotifierProvider(widget.userId));
+
+    // ✅ Listen for errors (optional, you can also handle loading differently)
+    ref.listen<AsyncValue<List<StoryModel>>>(
+      storyNotifierProvider(widget.userId),
+      (previous, next) {
+        next.whenOrNull(
+          error: (err, st) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: MyBoldText(
+                  text: '$err',
+                  fontSize: 16,
+                  color: MyColors.themeColor(context),
+                ),
               ),
-            ),
-          );
-        },
-      );
-    });
+            );
+          },
+        );
+      },
+    );
 
     return storyState.when(
       data: (data) => Padding(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 20.0),
-              child: MyBoldText(
-                text: 'Activities',
-                color: MyColors.textColor(context),
-                fontSize: 20,
-              ),
-            ),
-            SizedBox(
-              height: 120,
-              child: ListView.builder(
-                itemCount: data.length,
-                scrollDirection: Axis.horizontal,
-                controller: _controller,
-                itemBuilder: (context, index) => Padding(
-                  padding: EdgeInsets.only(
-                    right: 12.0,
-                    left: index == 0 ? 20 : 0,
+        child: data.isEmpty
+            ? SizedBox.shrink()
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20.0),
+                    child: MyBoldText(
+                      text: 'Activities',
+                      color: MyColors.textColor(context),
+                      fontSize: 20,
+                    ),
                   ),
-                  child: index == 0
-                      ? MyStoryCard(
-                          imageUrl: data[index].profilePhotoUrl ?? "",
-                          isSeen: data[index].isSeen ?? true,
-                          onStoryClick: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StoryScreen(
-                                  userId: data[index].userId ?? "",
-                                ),
-                              ),
-                            );
-                          },
-                          onStoryAddClick: () {},
-                        )
-                      : StoryCard(
-                          name: data[index].fullName ?? "N/A",
-                          imageUrl: data[index].profilePhotoUrl ?? "",
-                          isSeen: data[index].isSeen ?? true,
-                          onClick: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StoryScreen(
-                                  userId: data[index].userId ?? "",
-                                ),
-                              ),
-                            );
-                          },
+                  SizedBox(
+                    height: 120,
+                    child: ListView.builder(
+                      itemCount: data.length,
+                      scrollDirection: Axis.horizontal,
+                      controller: _controller,
+                      itemBuilder: (context, index) => Padding(
+                        padding: EdgeInsets.only(
+                          right: 12.0,
+                          left: index == 0 ? 20 : 0,
                         ),
-                ),
+                        child: index == 0
+                            ? MyStoryCard(
+                                imageUrl: data[index].profilePhotoUrl,
+                                isSeen: data[index].isSeen,
+                                onStoryClick: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => StoryScreen(
+                                        userId: data[index].userId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                onStoryAddClick: () {},
+                              )
+                            : StoryCard(
+                                name: data[index].fullName,
+                                imageUrl: data[index].profilePhotoUrl,
+                                isSeen: data[index].isSeen,
+                                onClick: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => StoryScreen(
+                                        userId: data[index].userId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, _) => Center(child: Text(err.toString())),

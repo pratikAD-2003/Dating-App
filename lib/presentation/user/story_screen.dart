@@ -1,3 +1,4 @@
+import 'package:dating_app/data/local/prefs_helper.dart';
 import 'package:dating_app/data/model/response/story/get_user_stories_res_model.dart';
 import 'package:dating_app/data/riverpod/story_notifier.dart';
 import 'package:dating_app/presentation/bottom_nav/my_messages_screen.dart';
@@ -16,183 +17,18 @@ class StoryScreen extends ConsumerStatefulWidget {
   ConsumerState<StoryScreen> createState() => _StoryScreenState();
 }
 
-// class _StoryScreenState extends ConsumerState<StoryScreen>
-//     with SingleTickerProviderStateMixin {
-//   late AnimationController _controller;
-//   bool _isPaused = false;
-//   bool _isLongPressed = false;
-//   int _currentStoryIndex = 0;
-
-//   @override
-//   void initState() {
-//     super.initState();
-
-//     _controller = AnimationController(
-//       vsync: this,
-//       duration: const Duration(seconds: 5),
-//     );
-//     _startStory();
-//   }
-
-//   void _startStory() {
-//     _controller.forward(from: 0);
-//     _controller.addStatusListener((status) {
-//       if (status == AnimationStatus.completed) {
-//         _nextStory();
-//       }
-//     });
-//   }
-
-//   void _nextStory() {
-//     if (_currentStoryIndex < (sampleData.user!.stories!.length - 1)) {
-//       setState(() => _currentStoryIndex++);
-//       _controller.reset();
-//       _controller.forward();
-//     } else {
-//       Navigator.pop(context);
-//     }
-//   }
-
-//   void _previousStory() {
-//     if (_currentStoryIndex > 0) {
-//       setState(() => _currentStoryIndex--);
-//       _controller.reset();
-//       _controller.forward();
-//     }
-//   }
-
-//   void _togglePlayPause() {
-//     setState(() {
-//       if (_isPaused) {
-//         _controller.forward();
-//       } else {
-//         _controller.stop();
-//       }
-//       _isPaused = !_isPaused;
-//     });
-//   }
-
-//   @override
-//   void dispose() {
-//     _controller.dispose();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     // final currentStory = sampleData.user!.stories![_currentStoryIndex];
-//     final storyState = ref.watch(getUserStoriesNotifierProvider);
-//     ref.listen(getUserStoriesNotifierProvider, (previous, next) {
-//       next.whenOrNull(
-//         data: (user) async {},
-//         error: (err, st) {
-//           ScaffoldMessenger.of(context).showSnackBar(
-//             SnackBar(
-//               content: MyBoldText(
-//                 text: '$err',
-//                 fontSize: 16,
-//                 color: MyColors.themeColor(context),
-//               ),
-//             ),
-//           );
-//         },
-//       );
-//     });
-
-//     return Scaffold(
-//       backgroundColor: MyColors.background(context),
-//       body: SafeArea(
-//         child: storyState.when(
-//           data: (data) => Stack(
-//             children: [
-//               // Story content
-//               Positioned.fill(
-//                 child: GestureDetector(
-//                   onLongPress: () {
-//                     _isLongPressed = true;
-//                     _togglePlayPause();
-//                   },
-//                   onLongPressEnd: (_) {
-//                     _isLongPressed = false;
-//                     _togglePlayPause();
-//                   },
-//                   onTapUp: (details) {
-//                     final width = MediaQuery.of(context).size.width;
-//                     if (details.globalPosition.dx < width / 2) {
-//                       _previousStory();
-//                     } else {
-//                       _nextStory();
-//                     }
-//                   },
-//                   child: Image.network(
-//                     // currentStory.mediaUrl!,
-//                     data?.user?.stories?[_currentStoryIndex].mediaUrl ?? "",
-//                     fit: BoxFit.cover,
-//                     loadingBuilder: (context, child, progress) {
-//                       if (progress == null) return child;
-//                       return Center(
-//                         child: CircularProgressIndicator(
-//                           color: MyColors.constTheme,
-//                         ),
-//                       );
-//                     },
-//                   ),
-//                 ),
-//               ),
-
-//               // Top bar with progress
-//               Positioned(
-//                 top: 15,
-//                 left: 15,
-//                 right: 15,
-//                 child: StoryTopBar(
-//                   isLongPressed: _isLongPressed,
-//                   controller: _controller,
-//                   onClose: () => Navigator.pop(context),
-//                   // name: sampleData.user!.fullName ?? "",
-//                   // time: currentStory.createdAt ?? "",
-//                   name: data?.user?.fullName ?? "",
-//                   time: Utils.formatChatTime(
-//                     data?.user?.stories?[_currentStoryIndex].createdAt,
-//                   ),
-//                 ),
-//               ),
-
-//               // Bottom message bar
-//               Positioned(
-//                 left: 0,
-//                 right: 0,
-//                 bottom: 10,
-//                 child: AnimatedOpacity(
-//                   opacity: _isLongPressed ? 0.0 : 1.0,
-//                   duration: const Duration(milliseconds: 200),
-//                   child: AnimatedSlide(
-//                     offset: _isLongPressed ? const Offset(0, 0.2) : Offset.zero,
-//                     duration: const Duration(milliseconds: 200),
-//                     child: StoryMsgInputSection(onText: (message) {}),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           loading: () => const Center(child: CircularProgressIndicator()),
-//           error: (err, _) => Center(child: Text(err.toString())),
-//         ),
-//       ),
-//     );
-//   }
-// }
 class _StoryScreenState extends ConsumerState<StoryScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   bool _isPaused = false;
   bool _isLongPressed = false;
   int _currentStoryIndex = 0;
+  String? myUserId;
 
   @override
   void initState() {
     super.initState();
-    // ✅ initial fetch
+    _loadProfileData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(getUserStoriesNotifierProvider.notifier)
@@ -203,6 +39,15 @@ class _StoryScreenState extends ConsumerState<StoryScreen>
       vsync: this,
       duration: const Duration(seconds: 5),
     );
+  }
+
+  Future<void> _loadProfileData() async {
+    String? id = await PrefsHelper.getUserId();
+
+    // Update UI if data found locally
+    setState(() {
+      myUserId = id;
+    });
   }
 
   void _startStory() {
@@ -273,11 +118,21 @@ class _StoryScreenState extends ConsumerState<StoryScreen>
 
     ref.listen(getUserStoriesNotifierProvider, (previous, next) {
       next.whenOrNull(
-        data: (user) {
+        data: (user) async {
           // Restart story animation only if data newly loaded
           if (user?.user?.stories?.isNotEmpty ?? false) {
             _currentStoryIndex = 0;
             _startStory();
+            // ✅ Call markSeen on your **realtime notifier**, not on HTTP provider
+            final storyId =
+                user?.user?.stories?[_currentStoryIndex].storyId ?? "";
+            if (storyId.isNotEmpty) {
+              // Call async method without await
+              ref
+                  .read(storyNotifierProvider(myUserId ?? "").notifier)
+                  .markSeen(storyId)
+                  .then((_) => debugPrint("MARK_API_CALLED"));
+            }
           }
         },
         error: (err, st) {

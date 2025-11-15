@@ -40,7 +40,7 @@ class ApiConstants {
 
   // STORY
   static const String uploadStory = "api/user/stories/uploadStory";
-  static const String viewStory = "api/user/stories/viewStory";
+  static const String viewStory = "api/user/stories/markStorySeen";
   static const String deleteStory = "api/user/stories/deleteStory";
   static const String getStories = "api/user/stories/getStories";
   static const String getUserStoriesById =
