@@ -7,6 +7,7 @@ import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:dating_app/presentation/user/story_screen.dart';
+import 'package:dating_app/presentation/user/user_detail_screen.dart';
 import 'package:dating_app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -352,10 +353,21 @@ class ChatScreenAppBarSection extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MyBoldText(
-                    text: name,
-                    color: MyColors.textColor(context),
-                    fontSize: 20,
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              UserDetailScreen(userId: userId),
+                        ),
+                      );
+                    },
+                    child: MyBoldText(
+                      text: name,
+                      color: MyColors.textColor(context),
+                      fontSize: 20,
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

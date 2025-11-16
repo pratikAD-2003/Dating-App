@@ -4,8 +4,8 @@ import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
 
 class PhotoGalleryScreen extends StatefulWidget {
-  const PhotoGalleryScreen({super.key});
-
+  const PhotoGalleryScreen({super.key, required this.images});
+  final List<String> images;
   @override
   State<PhotoGalleryScreen> createState() => _PhotoGalleryScreenState();
 }
@@ -14,11 +14,11 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
   final CarouselSliderController _carouselController =
       CarouselSliderController(); // ✅ controller
 
-  List<String> images = [
-    "assets/images/m1.png",
-    "assets/images/m2.jpg",
-    "assets/images/m3.jpg",
-  ];
+  // List<String> images = [
+  //   "assets/images/m1.png",
+  //   "assets/images/m2.jpg",
+  //   "assets/images/m3.jpg",
+  // ];
   int currentIndex = 0;
 
   @override
@@ -36,7 +36,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               child: Center(
                 child: PhotoSliderBanner(
                   carouselController: _carouselController,
-                  images: images,
+                  images: widget.images,
                   onChange: (index) {
                     setState(() {
                       currentIndex = index;
@@ -50,7 +50,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
               child: Center(
                 // ✅ centers content vertically
                 child: ListView.builder(
-                  itemCount: images.length,
+                  itemCount: widget.images.length,
                   scrollDirection: Axis.horizontal,
                   shrinkWrap: true,
                   physics: const BouncingScrollPhysics(),
@@ -59,7 +59,7 @@ class _PhotoGalleryScreenState extends State<PhotoGalleryScreen> {
                   ), // optional, for nice spacing
                   itemBuilder: (context, index) => Center(
                     child: PhotoGallerySmallImageCard(
-                      image: images[index],
+                      image: widget.images[index],
                       isSelected: index == currentIndex,
                       onClick: () {
                         setState(() {
@@ -117,7 +117,7 @@ class PhotoGallerySmallImageCard extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.asset(image, fit: BoxFit.cover),
+                child: Image.network(image, fit: BoxFit.cover),
               ),
             ),
 
@@ -169,7 +169,7 @@ class _PhotoSliderBannerState extends State<PhotoSliderBanner> {
                   child: Container(
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage(item),
+                        image: NetworkImage(item),
                         fit: BoxFit.cover,
                       ),
                     ),
