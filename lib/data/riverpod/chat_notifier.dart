@@ -1,85 +1,227 @@
-import 'package:dating_app/data/model/api_exception_model.dart';
-import 'package:dating_app/data/model/request/chat/get_chat_user_res_model.dart';
-import 'package:dating_app/data/model/response/chat/get_chat_user_res_model.dart';
+import 'package:dating_app/data/model/response/chat/chat_user_list_res_model.dart';
+import 'package:dating_app/data/model/response/chat/mark_seen_sucess_res_model.dart';
+import 'package:dating_app/data/model/response/chat/msg_res_model.dart';
+import 'package:dating_app/data/model/response/chat/send_msg_res_model.dart';
+import 'package:dating_app/data/networks/api_client.dart';
 import 'package:dating_app/data/repository/chat_repo.dart';
-import 'package:dating_app/data/riverpod/auth_notifier.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-// providers.dart or repository_provider.dart
-final chatRepoProvider = Provider(
-  (ref) => ChatRepository(ref.read(apiClientProvider)),
+// Repository provider
+final chatRepositoryProvider = Provider<ChatRepository>(
+  (ref) => ChatRepository(ApiClient()),
 );
 
-class ChatNotifier extends AsyncNotifier<List<Chats>> {
-  late final ChatRepository _chatRepository;
+// ================================
+// Load Chat Users
+// ================================
+class ChatNotifier
+    extends StateNotifier<AsyncValue<List<ChatUserListResModel>>> {
+  final ChatRepository repo;
+  final String currentUserId;
+  IO.Socket? socket;
 
-  int _page = 1;
-  final int _size = 10;
-  bool _hasMore = true;
-  bool _isLoadingMore = false;
-  String? _search;
-
-  @override
-  Future<List<Chats>> build() async {
-    _chatRepository = ref.read(chatRepoProvider);
-    return [];
+  ChatNotifier(this.repo, this.currentUserId)
+    : super(const AsyncValue.loading()) {
+    loadChats();
+    _setupSocket();
   }
 
-  bool get hasMore => _hasMore;
-  bool get isLoadingMore => _isLoadingMore;
-
-  Future<void> fetchChats(String userId, {String? search}) async {
-    // Prevent parallel or unnecessary calls
-    if (_isLoadingMore || !_hasMore) return;
-
-    _isLoadingMore = true;
-
+  Future<void> loadChats() async {
     try {
-      final body = GetChatUserReqModel(
-        page: _page,
-        size: _size,
-        search: search ?? _search,
-      );
-      final response = await _chatRepository.getUserChats(
-        userId: userId,
-        body: body,
-      );
-
-      final newChats = response.chats ?? [];
-
-      // Append to existing list
-      final currentChats = state.value ?? [];
-      final updatedList = [...currentChats, ...newChats];
-
-      // Update pagination flags
-      if (newChats.isEmpty || _page >= (response.totalPages ?? 1)) {
-        _hasMore = false;
-      } else {
-        _page++;
-      }
-
-      state = AsyncValue.data(updatedList);
-    } on ApiExceptionModel catch (apiError) {
-      // Caught API model (e.g. {"message": "Incorrect password!"})
-      final message = apiError.message ?? "Something went wrong";
-      state = AsyncValue.error(message, StackTrace.current);
-      debugPrint("Get_CHAT_USER_STATUS ---> API ERROR - $message");
+      final users = await repo.getChatUsers(currentUserId);
+      state = AsyncValue.data(users);
     } catch (e, st) {
-      // Other unexpected errors
-      state = AsyncValue.error("Unexpected error: $e", st);
-      debugPrint("Get_CHAT_USER_STATUS ---> UNKNOWN ERROR - ($e)");
+      state = AsyncValue.error(e, st);
     }
   }
 
-  void resetPagination() {
-    _page = 1;
-    _hasMore = true;
-    _isLoadingMore = false;
-    state = const AsyncValue.data([]);
+  void _setupSocket() {
+    socket = repo.socket;
+
+    if (!(socket!.connected)) {
+      socket!.connect();
+    }
+
+    socket!.emit("joinUser", currentUserId);
+
+    // When new chat message comes → refresh chat users list
+    socket!.on("new-message", (data) {
+      loadChats();
+    });
+
+    // when unseen/seen update → refresh chat list
+    socket!.on("seen-update", (data) {
+      loadChats();
+    });
+
+    // For typing indicator
+    socket!.on("typing-status", (data) {
+      loadChats();
+    });
   }
 }
 
-final chatNotifierProvider = AsyncNotifierProvider<ChatNotifier, List<Chats>>(
-  () => ChatNotifier(),
-);
+final chatListNotifierProvider =
+    StateNotifierProvider.family<
+      ChatNotifier,
+      AsyncValue<List<ChatUserListResModel>>,
+      String
+    >((ref, userId) => ChatNotifier(ref.read(chatRepositoryProvider), userId));
+
+// ================================
+// Load Messages
+// ================================
+class GetMessagesNotifier
+    extends StateNotifier<AsyncValue<List<MessageModelResModel>>> {
+  final ChatRepository repo;
+  final String chatId;
+  IO.Socket? socket;
+
+  GetMessagesNotifier(this.repo, this.chatId)
+    : super(const AsyncValue.loading()) {
+    loadMessages();
+    _setupSocket();
+  }
+
+  // ================================
+  // Load Messages
+  // ================================
+  Future<void> loadMessages() async {
+    try {
+      final msgs = await repo.getUserMessages(chatId);
+      state = AsyncValue.data(msgs);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  // ================================
+  // Setup Socket Listeners
+  // ================================
+  void _setupSocket() {
+    socket = repo.socket;
+
+    if (!(socket!.connected)) {
+      socket!.connect();
+    }
+
+    // Join chat room
+    socket!.emit("joinChat", {"chatId": chatId});
+
+    // ---------------------------------
+    // NEW MESSAGE EVENT
+    // ---------------------------------
+    socket!.on("new-message", (data) {
+      final message = data["message"];
+
+      // Check if message belongs to the same chatId
+      if (message["chatId"] == chatId) {
+        loadMessages(); // refresh only this chat's messages
+      }
+    });
+
+    // ---------------------------------
+    // Seen Updates
+    // ---------------------------------
+    socket!.on("seen-update", (data) {
+      if (data["chatId"] == chatId) {
+        loadMessages();
+      }
+    });
+
+    // ---------------------------------
+    // Typing event → DO NOT REFRESH messages
+    // ---------------------------------
+    socket!.on("typing-status", (data) {
+      // handled in ChatNotifier, not message list
+    });
+  }
+}
+
+final messageListNotifierProvider =
+    StateNotifierProvider.family<
+      GetMessagesNotifier,
+      AsyncValue<List<MessageModelResModel>>,
+      String
+    >(
+      (ref, chatId) =>
+          GetMessagesNotifier(ref.read(chatRepositoryProvider), chatId),
+    );
+
+// ================================
+// MarkSeenNotifier
+// ================================
+class MarkSeenNotifier
+    extends StateNotifier<AsyncValue<MarkSeenSuccessResModel?>> {
+  final ChatRepository repo;
+  final String userId;
+  final String chatId;
+
+  MarkSeenNotifier(this.repo, this.userId, this.chatId)
+    : super(const AsyncValue.data(null));
+
+  void markSeen() {
+    if (userId.isEmpty || chatId.isEmpty) return;
+
+    repo
+        .markSeenMessage(userId, chatId)
+        .then((res) {
+          state = AsyncValue.data(res);
+        })
+        .catchError((e) {
+          // ignore errors
+        });
+  }
+}
+
+final markSeenNotifierProvider =
+    StateNotifierProvider.family<
+      MarkSeenNotifier,
+      AsyncValue<MarkSeenSuccessResModel?>,
+      Map<String, String>
+    >(
+      (ref, params) => MarkSeenNotifier(
+        ref.read(chatRepositoryProvider),
+        params["userId"]!,
+        params["chatId"]!,
+      ),
+    );
+
+class SendMsgNotifier extends StateNotifier<AsyncValue<SendMsgResModel?>> {
+  final ChatRepository repo;
+  final String userId;
+  final String chatId;
+
+  SendMsgNotifier(this.repo, this.userId, this.chatId)
+    : super(const AsyncValue.data(null));
+
+  /// Fire-and-forget send message
+  void sendMessage(String text) {
+    if (text.isEmpty) return;
+
+    repo
+        .sendMsg(userId, chatId, text)
+        .then((res) {
+          // Optional: update state if needed
+          state = AsyncValue.data(res);
+        })
+        .catchError((e) {
+          // ignore errors
+        });
+  }
+}
+
+final sendMsgNotifierProvider =
+    StateNotifierProvider.family<
+      SendMsgNotifier,
+      AsyncValue<SendMsgResModel?>,
+      Map<String, String>
+    >(
+      (ref, params) => SendMsgNotifier(
+        ref.read(chatRepositoryProvider),
+        params["userId"]!,
+        params["chatId"]!,
+      ),
+    );

@@ -207,6 +207,7 @@ class _StoryScreenState extends ConsumerState<StoryScreen>
                   child: StoryTopBar(
                     isLongPressed: _isLongPressed,
                     controller: _controller,
+                    imageUrl: data?.user?.profilePhotoUrl ?? "",
                     onClose: () => Navigator.pop(context),
                     name: data?.user?.fullName ?? "",
                     time:
@@ -249,6 +250,7 @@ class StoryTopBar extends StatelessWidget {
   final AnimationController controller;
   final VoidCallback onClose;
   final String name;
+  final String imageUrl;
   final String time;
 
   const StoryTopBar({
@@ -257,6 +259,7 @@ class StoryTopBar extends StatelessWidget {
     required this.controller,
     required this.onClose,
     required this.name,
+    required this.imageUrl,
     required this.time,
   });
 
@@ -297,7 +300,11 @@ class StoryTopBar extends StatelessWidget {
                 Row(
                   spacing: 6,
                   children: [
-                    StoryCircularCard(size: 50, onClick: () {}),
+                    StoryCircularCard(
+                      size: 50,
+                      imageUrl: imageUrl,
+                      onClick: () {},
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

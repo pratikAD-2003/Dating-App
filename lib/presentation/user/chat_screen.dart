@@ -1,11 +1,50 @@
+import 'package:dating_app/data/local/prefs_helper.dart';
+import 'package:dating_app/data/model/response/chat/chat_user_list_res_model.dart';
+import 'package:dating_app/data/model/response/chat/msg_res_model.dart';
+import 'package:dating_app/data/riverpod/chat_notifier.dart';
 import 'package:dating_app/presentation/bottom_nav/my_messages_screen.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
+import 'package:dating_app/presentation/user/story_screen.dart';
+import 'package:dating_app/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatScreen extends StatelessWidget {
-  const ChatScreen({super.key});
+class ChatScreen extends ConsumerStatefulWidget {
+  const ChatScreen({super.key, required this.data});
+  final ChatUserListResModel data;
+
+  @override
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends ConsumerState<ChatScreen> {
+  String? myUserId;
+  @override
+  void initState() {
+    _loadProfileData();
+    super.initState();
+  }
+
+  Future<void> _loadProfileData() async {
+    String? id = await PrefsHelper.getUserId();
+
+    setState(() {
+      myUserId = id;
+    });
+  }
+
+  void onSendPressed(String text) {
+    final notifier = ref.read(
+      sendMsgNotifierProvider({
+        "userId": myUserId ?? "",
+        "chatId": widget.data.chatId ?? "",
+      }).notifier,
+    );
+
+    notifier.sendMessage(text);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,11 +53,15 @@ class ChatScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            ChatScreenAppBarSection(),
-            ChatBox(),
+            ChatScreenAppBarSection(
+              name: widget.data.fullName ?? "",
+              profile: widget.data.profilePhotoUrl ?? "",
+              userId: widget.data.userId ?? "",
+            ),
+            ChatBox(chatId: widget.data.chatId ?? "", myUserId: myUserId ?? ""),
             ChatInputSection(
               onText: (message) {
-                debugPrint(message);
+                onSendPressed(message);
               },
             ),
           ],
@@ -75,31 +118,110 @@ class ChatInputSection extends StatelessWidget {
   }
 }
 
-class ChatBox extends StatelessWidget {
-  const ChatBox({super.key});
+class ChatBox extends ConsumerStatefulWidget {
+  const ChatBox({super.key, required this.chatId, required this.myUserId});
+  final String chatId;
+  final String myUserId;
+  @override
+  ConsumerState<ChatBox> createState() => _ChatBoxState();
+}
+
+class _ChatBoxState extends ConsumerState<ChatBox> {
+  final ScrollController controller = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initial fetch
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref
+          .read(messageListNotifierProvider(widget.chatId).notifier)
+          .loadMessages();
+
+      scrollToEnd();
+      ref
+          .read(
+            markSeenNotifierProvider({
+              "userId": widget.myUserId,
+              "chatId": widget.chatId,
+            }).notifier,
+          )
+          .markSeen();
+    });
+  }
+
+  void scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.hasClients) {
+        controller.animateTo(
+          controller.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Pass the chatId to watch the family provider
+    final messageState = ref.watch(messageListNotifierProvider(widget.chatId));
+
+    // ✅ Listen for errors (optional, you can also handle loading differently)
+    ref.listen<AsyncValue<List<MessageModelResModel>>>(
+      messageListNotifierProvider(widget.chatId),
+      (previous, next) {
+        next.whenOrNull(
+          error: (err, st) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: MyBoldText(
+                  text: '$err',
+                  fontSize: 16,
+                  color: MyColors.themeColor(context),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
     return Expanded(
-      child: ListView.builder(
-        itemCount: 10,
-        reverse: true,
-        itemBuilder: (context, index) {
-          return Column(
-            children: [
-              index == 9 ? SizedBox(height: 5) : SizedBox.shrink(),
-              index % 2 == 0 ? ChatReceiveCard() : ChatSendCard(),
-            ],
-          );
-        },
+      child: messageState.when(
+        data: (data) => ListView.builder(
+          itemCount: data.length,
+          reverse: false,
+          controller: controller,
+          itemBuilder: (context, index) {
+            return Column(
+              children: [
+                index == 0 ? SizedBox(height: 5) : SizedBox(height: 2),
+                (data[index].senderId != widget.myUserId)
+                    ? ChatReceiveCard(
+                        text: data[index].text ?? "",
+                        time: data[index].createdAt ?? "",
+                      )
+                    : ChatSendCard(
+                        text: data[index].text ?? "",
+                        time: data[index].createdAt ?? "",
+                      ),
+              ],
+            );
+          },
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text(err.toString())),
       ),
     );
   }
 }
 
 class ChatReceiveCard extends StatelessWidget {
-  const ChatReceiveCard({super.key});
-
+  const ChatReceiveCard({super.key, required this.text, required this.time});
+  final String text;
+  final String time;
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -122,13 +244,13 @@ class ChatReceiveCard extends StatelessWidget {
                   ),
                 ),
                 child: MyRegularText(
-                  text: 'Hii\nIm Pratik yadav',
+                  text: text,
                   fontSize: 18,
                   color: MyColors.textColor(context),
                 ),
               ),
               MyRegularText(
-                text: '2:55 PM',
+                text: Utils.formatChatTime(time),
                 fontSize: 14,
                 color: MyColors.hintColor(context),
               ),
@@ -141,8 +263,9 @@ class ChatReceiveCard extends StatelessWidget {
 }
 
 class ChatSendCard extends StatelessWidget {
-  const ChatSendCard({super.key});
-
+  const ChatSendCard({super.key, required this.text, required this.time});
+  final String text;
+  final String time;
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -165,13 +288,13 @@ class ChatSendCard extends StatelessWidget {
                   ),
                 ),
                 child: MyRegularText(
-                  text: 'Hii\nIm Pratik yadav',
+                  text: text,
                   fontSize: 18,
                   color: MyColors.textColor(context),
                 ),
               ),
               MyRegularText(
-                text: '2:55 PM',
+                text: Utils.formatChatTime(time),
                 fontSize: 14,
                 color: MyColors.hintColor(context),
               ),
@@ -184,8 +307,15 @@ class ChatSendCard extends StatelessWidget {
 }
 
 class ChatScreenAppBarSection extends StatelessWidget {
-  const ChatScreenAppBarSection({super.key});
-
+  const ChatScreenAppBarSection({
+    super.key,
+    required this.profile,
+    required this.userId,
+    required this.name,
+  });
+  final String userId;
+  final String profile;
+  final String name;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -206,13 +336,24 @@ class ChatScreenAppBarSection extends StatelessWidget {
                   color: MyColors.constTheme,
                 ),
               ),
-              StoryCircularCard(size: 45, onClick: () {}),
+              StoryCircularCard(
+                size: 45,
+                imageUrl: profile,
+                onClick: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StoryScreen(userId: userId),
+                    ),
+                  );
+                },
+              ),
               SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   MyBoldText(
-                    text: 'Emma Williams',
+                    text: name,
                     color: MyColors.textColor(context),
                     fontSize: 20,
                   ),

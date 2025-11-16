@@ -1,11 +1,12 @@
 import 'package:dating_app/data/local/prefs_helper.dart';
-import 'package:dating_app/data/model/response/chat/get_chat_user_res_model.dart';
+import 'package:dating_app/data/model/response/chat/chat_user_list_res_model.dart';
 import 'package:dating_app/data/model/response/socket/story/story_model.dart';
 import 'package:dating_app/data/riverpod/chat_notifier.dart';
 import 'package:dating_app/data/riverpod/story_notifier.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
+import 'package:dating_app/presentation/user/chat_screen.dart';
 import 'package:dating_app/presentation/user/story_screen.dart';
 import 'package:dating_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -91,18 +92,10 @@ class _MyMessageChatsSectionState extends ConsumerState<MyMessageChatsSection> {
   @override
   void initState() {
     super.initState();
-    // ✅ initial fetch
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(chatNotifierProvider.notifier).fetchChats(widget.userId);
-    });
 
-    // ✅ pagination listener
-    _controller.addListener(() {
-      if (_controller.position.pixels >=
-          _controller.position.maxScrollExtent - 100) {
-        final notifier = ref.read(chatNotifierProvider.notifier);
-        notifier.fetchChats(widget.userId);
-      }
+    // Initial fetch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(chatListNotifierProvider(widget.userId).notifier).loadChats();
     });
   }
 
@@ -114,23 +107,28 @@ class _MyMessageChatsSectionState extends ConsumerState<MyMessageChatsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final chatState = ref.watch(chatNotifierProvider);
-    ref.listen(chatNotifierProvider, (previous, next) {
-      next.whenOrNull(
-        data: (user) async {},
-        error: (err, st) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: MyBoldText(
-                text: '$err',
-                fontSize: 16,
-                color: MyColors.themeColor(context),
+    // ✅ Pass the userId to watch the family provider
+    final chatState = ref.watch(chatListNotifierProvider(widget.userId));
+
+    // ✅ Listen for errors (optional, you can also handle loading differently)
+    ref.listen<AsyncValue<List<ChatUserListResModel>>>(
+      chatListNotifierProvider(widget.userId),
+      (previous, next) {
+        next.whenOrNull(
+          error: (err, st) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: MyBoldText(
+                  text: '$err',
+                  fontSize: 16,
+                  color: MyColors.themeColor(context),
+                ),
               ),
-            ),
-          );
-        },
-      );
-    });
+            );
+          },
+        );
+      },
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
@@ -154,9 +152,23 @@ class _MyMessageChatsSectionState extends ConsumerState<MyMessageChatsSection> {
               itemBuilder: (_, i) {
                 final chat = chats[i];
                 return ChatUserCard(
+                  userId: widget.userId,
                   data: chat,
-                  onStoryClick: () {},
-                  onClick: () {},
+                  onStoryClick: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            StoryScreen(userId: chat.userId ?? ""),
+                      ),
+                    );
+                  },
+                  onClick: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ChatScreen(data: chat,)),
+                    );
+                  },
                 );
               },
             ),
@@ -173,13 +185,15 @@ class ChatUserCard extends StatelessWidget {
   const ChatUserCard({
     super.key,
     required this.data,
+    required this.userId,
     required this.onStoryClick,
     required this.onClick,
   });
 
-  final Chats data;
+  final ChatUserListResModel data;
   final VoidCallback onStoryClick;
   final VoidCallback onClick;
+  final String userId;
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +207,7 @@ class ChatUserCard extends StatelessWidget {
           children: [
             StoryCircularCard(
               size: 55,
-              imageUrl: data.participant?.profilePhotoUrl,
+              imageUrl: data.profilePhotoUrl,
               onClick: () => onStoryClick(),
             ),
             Expanded(
@@ -206,7 +220,7 @@ class ChatUserCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       MyBoldText(
-                        text: data.participant?.fullName ?? "N/A",
+                        text: data.fullName ?? "N/A",
                         color: MyColors.textColor(context),
                         fontSize: 18,
                         textAlign: TextAlign.center,
@@ -223,14 +237,14 @@ class ChatUserCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       MyRegularText(
-                        text: (data.byMe ?? false)
-                            ? "You: ${data.lastMessage}"
-                            : "${data.lastMessage}",
+                        text: ((data.lastMessage?.senderId == userId))
+                            ? "You: ${data.lastMessage?.message}"
+                            : "${data.lastMessage?.message}",
                         color: MyColors.textColor(context),
                         fontSize: 15,
                         textAlign: TextAlign.center,
                       ),
-                      if ((data.isSeenMessage != true))
+                      if (((data.unseenCount ?? 0) > 0))
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(50),
@@ -239,7 +253,7 @@ class ChatUserCard extends StatelessWidget {
                           height: 22,
                           width: 22,
                           child: MyBoldText(
-                            text: '${data.unseenMessagesCount}',
+                            text: '${data.unseenCount}',
                             color: MyColors.constWhite,
                             fontSize: 14,
                             textAlign: TextAlign.center,

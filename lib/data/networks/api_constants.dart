@@ -50,4 +50,8 @@ class ApiConstants {
 
   // CHAT
   static const String getUserChats = "api/user/chat/getUserChats";
+  static const String getChatUsers = "api/user/chat/list";
+  static const String getUserMessages = "api/user/chat/messages";
+  static const String markSeen = "api/user/chat/mark-seen";
+  static const String sendMessage = "api/user/chat/send-message";
 }
