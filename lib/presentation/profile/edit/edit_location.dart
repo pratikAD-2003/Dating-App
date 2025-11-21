@@ -7,10 +7,10 @@ import 'package:dating_app/data/riverpod/place_notifier.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
-import 'package:dating_app/presentation/profile/location_screen.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditLocation extends ConsumerStatefulWidget {
   const EditLocation({super.key});
@@ -33,10 +33,14 @@ class _EditLocationState extends ConsumerState<EditLocation> {
   OverlayEntry? _overlayEntry;
 
   List<String> filteredCities = [];
+  List<String> savedImages = [];
+  List<String> removedImages = [];
   List<File> photogalleryImages = [];
 
   List<String> gallery = [];
   List<String> gender = [];
+  List<String> interest = [];
+  List<String> language = [];
   String? userId;
   bool _isLoading = true;
   Location? selectedPlace;
@@ -53,19 +57,25 @@ class _EditLocationState extends ConsumerState<EditLocation> {
     final genderList = await PrefsHelper.getGenderPreference();
     final minA = await PrefsHelper.getAgeMin();
     final maxA = await PrefsHelper.getAgeMax();
+    final interests = await PrefsHelper.getInterests();
+    final languages = await PrefsHelper.getLanguages();
     String? id = await PrefsHelper.getUserId();
     String? city = await PrefsHelper.getLocationCity();
     String? country = await PrefsHelper.getLocationCountry();
     String? type = await PrefsHelper.getLocationType();
     double? long = await PrefsHelper.getLocationLng();
     double? lat = await PrefsHelper.getLocationLat();
+    final savedPics = await PrefsHelper.getGallery();
     // Update UI if data found locally
     setState(() {
       userId = id;
       distanceController.text = dis.toString();
       selectedGenders = genderList ?? [];
+      savedImages = savedPics ?? [];
       minAgeController.text = minA.toString();
       maxAgeController.text = maxA.toString();
+      interest = interests ?? [];
+      language = languages ?? [];
       selectedPlace = Location(
         city: city,
         coordinates: [long ?? 0.0, lat ?? 0.0],
@@ -198,9 +208,9 @@ class _EditLocationState extends ConsumerState<EditLocation> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(updatePreferenceNotifierProvider);
+    final authState = ref.watch(updateAndRemovePreferenceNotifierProvider);
 
-    ref.listen(updatePreferenceNotifierProvider, (previous, next) {
+    ref.listen(updateAndRemovePreferenceNotifierProvider, (previous, next) {
       next.whenOrNull(
         data: (user) async {
           if (user != null) {
@@ -293,7 +303,13 @@ class _EditLocationState extends ConsumerState<EditLocation> {
                                       ),
                                     ],
                                   ),
-                                  MultiImagePickerWidget(
+                                  EditPrefImagePickerWidget(
+                                    onSavedImagesRemoved: (imageUrl) {
+                                      setState(() {
+                                        removedImages.addAll(imageUrl);
+                                      });
+                                    },
+                                    savedImages: savedImages,
                                     maxImages: 5,
                                     onImagesChanged: (image) {
                                       setState(() {
@@ -395,11 +411,14 @@ class _EditLocationState extends ConsumerState<EditLocation> {
                           String? userId = await PrefsHelper.getUserId();
                           if (userId != null) {
                             await ref
-                                .read(updatePreferenceNotifierProvider.notifier)
+                                .read(
+                                  updateAndRemovePreferenceNotifierProvider
+                                      .notifier,
+                                )
                                 .updatePref(
                                   userId: userId,
-                                  interests: [],
-                                  languages: [],
+                                  interests: interest,
+                                  languages: language,
                                   distancePreference: double.parse(
                                     distanceController.text,
                                   ),
@@ -419,6 +438,7 @@ class _EditLocationState extends ConsumerState<EditLocation> {
                                     coordinates: selectedPlace?.coordinates,
                                   ).toJson(),
                                   images: photogalleryImages,
+                                  removedImages: removedImages,
                                 );
                           }
                         },
@@ -427,6 +447,184 @@ class _EditLocationState extends ConsumerState<EditLocation> {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class EditPrefImagePickerWidget extends StatefulWidget {
+  final Function(List<File>) onImagesChanged;
+  final Function(List<String>) onSavedImagesRemoved;
+  final int maxImages;
+  final List<String> savedImages;
+
+  const EditPrefImagePickerWidget({
+    super.key,
+    required this.onImagesChanged,
+    required this.onSavedImagesRemoved,
+    this.maxImages = 5,
+    required this.savedImages,
+  });
+
+  @override
+  State<EditPrefImagePickerWidget> createState() =>
+      _EditPrefImagePickerWidgetState();
+}
+
+class _EditPrefImagePickerWidgetState extends State<EditPrefImagePickerWidget> {
+  final ImagePicker _picker = ImagePicker();
+
+  List<File> _selectedImages = [];
+  List<String> _savedImages = [];
+  List<String> _removedSavedImages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _savedImages = List.from(widget.savedImages);
+  }
+
+  Future<void> _pickImages() async {
+    final pickedFiles = await _picker.pickMultiImage();
+    final newImages = pickedFiles.map((x) => File(x.path)).toList();
+
+    setState(() {
+      _selectedImages = [
+        ..._selectedImages,
+        ...newImages,
+      ].take(widget.maxImages - _savedImages.length).toList();
+    });
+
+    widget.onImagesChanged(_selectedImages);
+  }
+
+  void _removeSelectedImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+    widget.onImagesChanged(_selectedImages);
+  }
+
+  void _removeSavedImage(int index) {
+    final removedUrl = _savedImages[index];
+
+    setState(() {
+      _savedImages.removeAt(index);
+      _removedSavedImages.add(removedUrl);
+    });
+
+    widget.onSavedImagesRemoved(_removedSavedImages);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totalImages = _savedImages.length + _selectedImages.length;
+    final canAddMore = totalImages < widget.maxImages;
+
+    return SizedBox(
+      height: 110,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          // OLD SAVED IMAGES
+          ..._savedImages.asMap().entries.map((entry) {
+            final index = entry.key;
+            final image = entry.value;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      image,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () => _removeSavedImage(index),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.all(2),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          // NEWLY PICKED IMAGES
+          ..._selectedImages.asMap().entries.map((entry) {
+            final index = entry.key;
+            final file = entry.value;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      file,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () => _removeSelectedImage(index),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.all(2),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          // ADD NEW IMAGE BUTTON
+          if (canAddMore)
+            GestureDetector(
+              onTap: _pickImages,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(child: Icon(Icons.add_a_photo, size: 32)),
+              ),
+            ),
+        ],
       ),
     );
   }

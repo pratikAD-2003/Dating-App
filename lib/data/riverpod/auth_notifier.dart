@@ -8,6 +8,8 @@ import 'package:dating_app/data/model/response/auth/profile/preference_res_model
 import 'package:dating_app/data/model/response/auth/profile/profile_req_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/update_interest_res_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/update_language_res_model.dart';
+import 'package:dating_app/data/model/response/auth/profile/update_remove_pref_res_model.dart'
+    hide AgeRangePreference;
 import 'package:dating_app/data/model/response/auth/signup/signup_res_model.dart';
 import 'package:dating_app/data/networks/api_client.dart';
 import 'package:dating_app/data/repository/auth_repo.dart';
@@ -326,7 +328,6 @@ final updateLanguageNotifierProvider =
       () => UpdateLanguageNotifier(),
     );
 
-
 // 🔹 Update Interest------------------------------------------------------------------------------------------------------------
 class UpdateInterestNotifier extends AsyncNotifier<UpdateInterestResModel?> {
   late final AuthRepository _authRepository;
@@ -360,3 +361,58 @@ final updateInterestNotifierProvider =
     AsyncNotifierProvider<UpdateInterestNotifier, UpdateInterestResModel?>(
       () => UpdateInterestNotifier(),
     );
+
+// 🔹 Update and Removed Preference ------------------------------------------------------------------------------------------------------------
+class PreferenceAndRemovedNotifier
+    extends AsyncNotifier<UpdateRemoveUserPreferenceResModel?> {
+  late final AuthRepository _profileRepository;
+
+  @override
+  Future<UpdateRemoveUserPreferenceResModel?> build() async {
+    _profileRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  Future<void> updatePref({
+    required String userId,
+    required List<String>? interests,
+    required List<String>? languages,
+    required double? distancePreference,
+    required AgeRangePreference? ageRangePreference,
+    required List<String>? genderPreference,
+    required Map<String, dynamic>? location,
+    required List<File>? images,
+    required List<String>? removedImages,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final res = await _profileRepository.updateAndRemovePreference(
+        userId: userId,
+        interests: interests,
+        languages: languages,
+        distancePreference: distancePreference,
+        ageRangePreference: ageRangePreference,
+        genderPreference: genderPreference,
+        location: location,
+        images: images,
+        removedImages: removedImages,
+      );
+      state = AsyncValue.data(res);
+    } on ApiExceptionModel catch (apiError) {
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint(
+        "PREFERENCE_UPDATE_AND+_REMOVED_STATUS ---> API ERROR - $message",
+      );
+    } catch (e, st) {
+      state = AsyncValue.error("Unexpected Error: $e", st);
+      debugPrint("PREFERENCE_UPDATE_AND+_REMOVED_STATUS ---> API ERROR - $e");
+    }
+  }
+}
+
+final updateAndRemovePreferenceNotifierProvider =
+    AsyncNotifierProvider<
+      PreferenceAndRemovedNotifier,
+      UpdateRemoveUserPreferenceResModel?
+    >(() => PreferenceAndRemovedNotifier());

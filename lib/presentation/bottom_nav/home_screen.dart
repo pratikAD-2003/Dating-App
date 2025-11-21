@@ -1,146 +1,80 @@
 import 'dart:ui';
 
+import 'package:dating_app/data/local/prefs_helper.dart';
+import 'package:dating_app/data/model/response/user/get_home_users_res_model.dart';
+import 'package:dating_app/data/riverpod/user_notifier.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
+import 'package:dating_app/presentation/components/shimmer_layouts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
+import 'package:dating_app/presentation/user/user_detail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tcard/tcard.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final TCardController _controller = TCardController();
 
-  final List<SampleModel> sampleList = [
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 3,
-      age: 22,
-      name: 'Jessica Parker',
-    ),
-    SampleModel(
-      icon: 'assets/images/m3.jpg',
-      distance: 5,
-      age: 24,
-      name: 'Sophia Turner',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 2,
-      age: 21,
-      name: 'Olivia Martin',
-    ),
-    SampleModel(
-      icon: 'assets/images/m3.jpg',
-      distance: 4,
-      age: 25,
-      name: 'Ava Johnson',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 6,
-      age: 23,
-      name: 'Emily Davis',
-    ),
-    SampleModel(
-      icon: 'assets/images/m3.jpg',
-      distance: 1,
-      age: 26,
-      name: 'Isabella Clark',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 7,
-      age: 24,
-      name: 'Mia Wilson',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 3,
-      age: 22,
-      name: 'Amelia Lewis',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 8,
-      age: 27,
-      name: 'Ella Walker',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 2,
-      age: 23,
-      name: 'Harper Young',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 5,
-      age: 25,
-      name: 'Grace Hall',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 4,
-      age: 26,
-      name: 'Chloe Allen',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 6,
-      age: 24,
-      name: 'Lily Scott',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 7,
-      age: 28,
-      name: 'Zoe Adams',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 3,
-      age: 23,
-      name: 'Layla Moore',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 5,
-      age: 22,
-      name: 'Aria White',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 2,
-      age: 24,
-      name: 'Scarlett King',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 4,
-      age: 25,
-      name: 'Victoria Lee',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 6,
-      age: 27,
-      name: 'Hannah Baker',
-    ),
-    SampleModel(
-      icon: 'assets/images/m2.jpg',
-      distance: 8,
-      age: 26,
-      name: 'Nora Evans',
-    ),
-  ];
+  String? currentCity;
+  String? userId;
+  bool _isLoading = true;
+  List<Users> homeUsersList = [];
+  @override
+  void initState() {
+    loadData();
+    super.initState();
+  }
+
+  Future<void> loadData() async {
+    final city = await PrefsHelper.getLocationCity();
+    final id = await PrefsHelper.getUserId();
+    setState(() {
+      currentCity = city;
+      userId = id;
+    });
+    if (userId != null) {
+      await ref
+          .read(getHomeMatchesProvider.notifier)
+          .getHomeMatches(userId ?? " ");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(getHomeMatchesProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) async {
+          if (user != null) {
+            await Future.delayed(const Duration(seconds: 2));
+
+            setState(() {
+              homeUsersList = user.users ?? [];
+            });
+            setState(() => _isLoading = false);
+          }
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+            ),
+          );
+          setState(() => _isLoading = false);
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: MyColors.background(context),
       body: SafeArea(
@@ -153,51 +87,71 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 HomeBar(
-                  location: 'Mumbai, India',
+                  location: currentCity ?? "",
                   onLocation: () {},
                   onFilter: () {},
                 ),
                 SizedBox(height: 20),
                 Expanded(
                   child: Center(
-                    child: TCard(
-                      controller: _controller,
-                      size: Size(
-                        MediaQuery.of(context).size.width * 0.95,
-                        MediaQuery.of(context).size.height * 0.60,
-                      ),
-                      cards: sampleList
-                          .map(
-                            (e) => HomeCardLy(
-                              icon: e.icon,
-                              age: e.age,
-                              distance: e.distance,
-                              name: e.name,
-                              onSwipeLeft: () {},
-                              onSwipeRight: () {},
+                    child: _isLoading
+                        ? HomeShimmerLy()
+                        : homeUsersList.isNotEmpty
+                        ? TCard(
+                            controller: _controller,
+                            size: Size(
+                              MediaQuery.of(context).size.width * 0.95,
+                              MediaQuery.of(context).size.height * 0.60,
                             ),
+                            cards: homeUsersList
+                                .map(
+                                  (e) => HomeCardLy(
+                                    job: e.profession ?? "",
+                                    icon: e.profilePhotoUrl ?? "",
+                                    age: e.age ?? -1,
+                                    distance: e.distance ?? 0,
+                                    name: e.fullName ?? "",
+                                    onSwipeLeft: () {},
+                                    onSwipeRight: () {},
+                                    onClick: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              UserDetailScreen(
+                                                userId: e.userId ?? "",
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                                .toList(),
+                            onForward: (index, info) {
+                              debugPrint(
+                                "Swiped ${info.direction == SwipDirection.Left ? "Left ❌" : "Right ❤️"}",
+                              );
+                            },
+                            onEnd: () {
+                              debugPrint("All cards swiped!");
+                            },
                           )
-                          .toList(),
-                      onForward: (index, info) {
-                        debugPrint(
-                          "Swiped ${info.direction == SwipDirection.Left ? "Left ❌" : "Right ❤️"}",
-                        );
-                      },
-                      onEnd: () {
-                        debugPrint("All cards swiped!");
-                      },
-                    ),
+                        : MyRegularText(
+                            text: 'Users not found!',
+                            color: MyColors.textLight2Color(context),
+                          ),
                   ),
                 ),
-                HomeBottomSection(
-                  onReject: () {
-                    _controller.forward(direction: SwipDirection.Left);
-                  },
-                  onAccept: () {
-                    _controller.forward(direction: SwipDirection.Right);
-                  },
-                  onFavorite: () {},
-                ),
+                if (!_isLoading && homeUsersList.isNotEmpty)
+                  HomeBottomSection(
+                    onReject: () {
+                      _controller.forward(direction: SwipDirection.Left);
+                    },
+                    onAccept: () {
+                      _controller.forward(direction: SwipDirection.Right);
+                    },
+                    onFavorite: () {},
+                  ),
               ],
             ),
           ),
@@ -214,15 +168,19 @@ class HomeCardLy extends StatefulWidget {
     required this.distance,
     required this.age,
     required this.name,
+    required this.job,
     this.onSwipeLeft,
     this.onSwipeRight,
+    required this.onClick,
   });
   final String icon;
-  final int distance;
+  final num distance;
   final int age;
   final String name;
+  final String job;
   final VoidCallback? onSwipeLeft;
   final VoidCallback? onSwipeRight;
+  final VoidCallback onClick;
 
   @override
   State<HomeCardLy> createState() => _HomeCardLyState();
@@ -235,6 +193,9 @@ class _HomeCardLyState extends State<HomeCardLy> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onTap: () {
+        widget.onClick();
+      },
       onPanStart: (_) {
         // reset when new drag starts
         dragValue = 0;
@@ -285,7 +246,7 @@ class _HomeCardLyState extends State<HomeCardLy> {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: Image.asset(widget.icon, fit: BoxFit.cover),
+                  child: Image.network(widget.icon, fit: BoxFit.cover),
                 ),
                 Positioned(
                   top: 15,
@@ -339,7 +300,7 @@ class _HomeCardLyState extends State<HomeCardLy> {
                               fontSize: 24,
                             ),
                             MyRegularText(
-                              text: "Software Engineer",
+                              text: widget.job,
                               color: MyColors.constWhite,
                               fontSize: 16,
                             ),
@@ -349,27 +310,6 @@ class _HomeCardLyState extends State<HomeCardLy> {
                     ),
                   ),
                 ),
-
-                // trigger when swipping
-                // if (direction.isNotEmpty)
-                //   Positioned(
-                //     bottom: 0,
-                //     left: 0,
-                //     right: 0,
-                //     top: 0,
-                //     child: Center(
-                //       child: MyCircularElevatedBtn(
-                //         icon: direction == "left"
-                //             ? 'assets/images/close.png'
-                //             : 'assets/images/heart.png',
-                //         cardColor: MyColors.themeColor(context),
-                //         iconColor: MyColors.constOrg,
-                //         size: 75,
-                //         iconSize: 35,
-                //         onClick: () => {},
-                //       ),
-                //     ),
-                //   ),
               ],
             ),
           ),
@@ -531,33 +471,5 @@ class MyCircularElevatedBtn extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class SampleModel {
-  final String icon;
-  final int distance;
-  final int age;
-  final String name;
-
-  SampleModel({
-    required this.icon,
-    required this.distance,
-    required this.age,
-    required this.name,
-  });
-
-  // Optional: If you ever want to use JSON (API integration)
-  factory SampleModel.fromJson(Map<String, dynamic> json) {
-    return SampleModel(
-      icon: json['icon'],
-      distance: json['distance'],
-      age: json['age'],
-      name: json['name'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'icon': icon, 'distance': distance, 'age': age, 'name': name};
   }
 }

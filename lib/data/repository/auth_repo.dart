@@ -8,6 +8,8 @@ import 'package:dating_app/data/model/response/auth/profile/preference_res_model
 import 'package:dating_app/data/model/response/auth/profile/profile_req_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/update_interest_res_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/update_language_res_model.dart';
+import 'package:dating_app/data/model/response/auth/profile/update_remove_pref_res_model.dart'
+    hide AgeRangePreference;
 import 'package:dating_app/data/model/response/auth/signup/signup_res_model.dart';
 import 'package:dating_app/data/networks/api_client.dart';
 import 'package:dating_app/data/networks/api_constants.dart';
@@ -152,5 +154,67 @@ class AuthRepository {
       data,
     );
     return UpdateIanguageResModel.fromJson(response);
+  }
+
+  Future<UpdateRemoveUserPreferenceResModel> updateAndRemovePreference({
+    required String userId,
+    required List<String>? interests,
+    required List<String>? languages,
+    required double? distancePreference,
+    required AgeRangePreference? ageRangePreference,
+    required List<String>? genderPreference,
+    required Map<String, dynamic>? location,
+    required List<File>? images,
+    required List<String>? removedImages,
+  }) async {
+    final Map<String, dynamic> data = {
+      "userId": userId,
+      "interests": interests ?? [],
+      "languages": languages ?? [],
+      "distancePreference": distancePreference ?? 0,
+      "ageRangePreference":
+          ageRangePreference?.toJson() ??
+          {"min": 18, "max": 50}, // send as object
+      "genderPreference": genderPreference ?? [],
+      "location": location ?? {},
+      "removedImages": removedImages ?? [],
+    };
+
+    final rawResponse = await apiClient.putMultipartMultiple(
+      ApiConstants.updateRemovePreferences,
+      data,
+      images,
+      "images",
+    );
+
+    // 🧠 Log for debugging
+    debugPrint("📩 Raw Preference Remove Update Response: $rawResponse");
+
+    try {
+      dynamic jsonResponse = rawResponse;
+
+      // ✅ Step 1: Decode if it's a string
+      if (rawResponse is String) {
+        try {
+          jsonResponse = jsonDecode(rawResponse as String);
+        } catch (_) {
+          // Not JSON — wrap it in a map
+          jsonResponse = {"message": rawResponse};
+        }
+      }
+
+      // ✅ Step 2: Ensure it’s always a Map
+      if (jsonResponse is Map<String, dynamic>) {
+        return UpdateRemoveUserPreferenceResModel.fromJson(jsonResponse);
+      } else {
+        return UpdateRemoveUserPreferenceResModel(
+          message: jsonResponse.toString(),
+        );
+      }
+    } catch (e, st) {
+      debugPrint("⚠️ PreferenceResModel parsing failed: $e");
+      debugPrint("StackTrace: $st");
+      return UpdateRemoveUserPreferenceResModel(message: "Parsing error: $e");
+    }
   }
 }

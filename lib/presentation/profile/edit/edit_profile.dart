@@ -8,6 +8,7 @@ import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/profile/update_profile.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
+import 'package:dating_app/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -54,7 +55,7 @@ class _EditProfileState extends ConsumerState<EditProfile> {
       userId = id;
       nameController.text = name ?? "N/A";
       genderController.text = gender ?? "N/A";
-      dobController.text = dob ?? "";
+      dobController.text = Utils.isoToSlashDate(dob ?? "");
       professionController.text = job ?? "N/A";
       bioController.text = bio ?? "N/A";
       _isLoading = false;

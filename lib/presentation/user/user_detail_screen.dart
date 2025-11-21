@@ -19,6 +19,7 @@ class UserDetailScreen extends ConsumerStatefulWidget {
 
 class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
   late final GetUserDetailResModel? data;
+  bool _isLoading = true;
   @override
   void initState() {
     // Initial fetch
@@ -40,6 +41,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
           if (user != null) {
             setState(() {
               data = user;
+              _isLoading = false;
             });
           }
         },
@@ -60,7 +62,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
     return Scaffold(
       backgroundColor: MyColors.background(context),
       body: SafeArea(
-        child: getUserDetailsState.isLoading
+        child: getUserDetailsState.isLoading || _isLoading
             ? CircularProgressIndicator(color: MyColors.constTheme)
             : Stack(
                 children: [
@@ -140,6 +142,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
                                           profession:
                                               data?.data?.profile?.profession ??
                                               "",
+                                          onMessage: () {},
                                         ),
                                         SizedBox(height: 30),
                                         UserDetailsLocationSection(
@@ -440,31 +443,6 @@ class UserDetailsLocationSection extends StatelessWidget {
             ),
           ],
         ),
-        Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: MyColors.chatBoxColor(context),
-            borderRadius: BorderRadius.circular(7),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            spacing: 2,
-            children: [
-              Image.asset(
-                'assets/images/location.png',
-                color: MyColors.constTheme,
-                height: 18,
-                width: 18,
-              ),
-              MyBoldText(
-                text: '4 km',
-                color: MyColors.constTheme,
-                fontSize: 16,
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -476,11 +454,12 @@ class UserDetailNameLableSection extends StatelessWidget {
     required this.name,
     required this.age,
     required this.profession,
+    required this.onMessage,
   });
   final String name;
   final int age;
   final String profession;
-
+  final VoidCallback onMessage;
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -504,7 +483,7 @@ class UserDetailNameLableSection extends StatelessWidget {
               ],
             ),
             InkWell(
-              onTap: () {},
+              onTap: () => onMessage(),
               borderRadius: BorderRadius.circular(10),
               child: Container(
                 decoration: BoxDecoration(

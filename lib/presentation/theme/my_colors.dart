@@ -53,4 +53,19 @@ class MyColors {
       Theme.of(context).brightness == Brightness.dark
       ? Color(0xff1E1E1E)
       : Color(0xffF3F3F3);
+
+  static Color shimmerBaseColor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? Colors.grey.shade800
+      : Colors.grey.shade300;
+
+  static Color shimmerHighlightedColor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? Colors.grey.shade600
+      : Colors.grey.shade100;
+
+  static Color shimmerContainerColor(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? Colors.grey.shade900
+      : Colors.grey.shade200;
 }

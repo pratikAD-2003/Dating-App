@@ -30,6 +30,9 @@ class ApiConstants {
   // PREFERENCE UPDATE
   static const String updateUserPreferences =
       "api/user/auth/updateUserPreferences";
+  // PREFERENCE UPDATE AND REMOVE
+  static const String updateRemovePreferences =
+      "api/user/auth/updatePreferences";
 
   // USERS
   static const String getHomeMatches = "api/user/item/getHomeMatches";
@@ -54,4 +57,5 @@ class ApiConstants {
   static const String getUserMessages = "api/user/chat/messages";
   static const String markSeen = "api/user/chat/mark-seen";
   static const String sendMessage = "api/user/chat/send-message";
+
 }

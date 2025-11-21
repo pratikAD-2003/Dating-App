@@ -31,8 +31,8 @@ class StoryRepository {
   }
 
   Future<StoryModel?> uploadStory(String userId, File file) async {
-    final res = await apiClient.putMultipart(
-      "/stories/uploadStory",
+    final res = await apiClient.postMultipart(
+      ApiConstants.uploadStory,
       {"userId": userId},
       file,
       "storyImageUrl",

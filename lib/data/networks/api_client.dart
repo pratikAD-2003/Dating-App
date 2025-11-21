@@ -78,22 +78,6 @@ class ApiClient {
       request.fields[key] = value;
     });
 
-    // ✅ add file only if selected
-    // if (file != null && await file.exists()) {
-    //   final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
-    //   final fileStream = http.ByteStream(file.openRead());
-    //   final fileLength = await file.length();
-
-    //   final multipartFile = http.MultipartFile(
-    //     fileFieldName,
-    //     fileStream,
-    //     fileLength,
-    //     filename: file.path.split('/').last,
-    //     contentType: MediaType.parse(mimeType),
-    //   );
-
-    //   request.files.add(multipartFile);
-    // }
     if (file != null && await file.exists()) {
       final multipartFile = http.MultipartFile(
         fileFieldName,
@@ -115,53 +99,42 @@ class ApiClient {
     }
   }
 
-  /// Multipart for multiple image upload
-  // Future<Map<String, dynamic>> putMultipartMultiple(
-  //   String endpoint,
-  //   Map<String, String> fields,
-  //   List<File>? files,
-  //   String fileFieldName,
-  // ) async {
-  //   final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
-  //   final request = http.MultipartRequest('PUT', url);
+    /// Multipart for image upload
+  Future<dynamic> postMultipart(
+    String endpoint,
+    Map<String, String> fields,
+    File? file,
+    String fileFieldName,
+  ) async {
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
-  //   // Add form fields
-  //   request.fields.addAll(fields);
+    final request = http.MultipartRequest("POST", url);
 
-  //   // Add files (max 5)
-  //   if (files != null && files.isNotEmpty) {
-  //     for (var file in files.take(5)) {
-  //       if (await file.exists()) {
-  //         final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
-  //         final multipartFile = await http.MultipartFile.fromPath(
-  //           fileFieldName,
-  //           file.path,
-  //           contentType: MediaType.parse(mimeType),
-  //         );
-  //         request.files.add(multipartFile);
-  //       }
-  //     }
-  //   }
+    // ✅ add text fields as plain form fields
+    fields.forEach((key, value) {
+      request.fields[key] = value;
+    });
 
-  //   final response = await request.send();
-  //   final body = await response.stream.bytesToString();
+    if (file != null && await file.exists()) {
+      final multipartFile = http.MultipartFile(
+        fileFieldName,
+        http.ByteStream(file.openRead()),
+        await file.length(),
+        filename: file.path.split('/').last,
+        contentType: MediaType.parse(lookupMimeType(file.path) ?? 'image/jpeg'),
+      );
+      request.files.add(multipartFile);
+    }
 
-  //   if (response.statusCode >= 200 && response.statusCode < 300) {
-  //     try {
-  //       final decoded = jsonDecode(body);
-  //       if (decoded is Map<String, dynamic>) {
-  //         return decoded;
-  //       } else {
-  //         return {"data": decoded, "message": "Parsed as array"};
-  //       }
-  //     } catch (e) {
-  //       // Backend returned a plain string
-  //       return {"message": body};
-  //     }
-  //   } else {
-  //     throw Exception('HTTP ${response.statusCode}: $body');
-  //   }
-  // }
+    final streamedResponse = await request.send();
+    final responseBody = await streamedResponse.stream.bytesToString();
+
+    if (responseBody.trim().startsWith('{')) {
+      return jsonDecode(responseBody);
+    } else {
+      throw Exception(responseBody); // e.g., "Only image files are allowed"
+    }
+  }
 
   Future<Map<String, dynamic>> putMultipartMultiple(
     String endpoint,

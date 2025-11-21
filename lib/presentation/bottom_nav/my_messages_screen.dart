@@ -7,6 +7,7 @@ import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:dating_app/presentation/user/chat_screen.dart';
+import 'package:dating_app/presentation/user/post_story.dart';
 import 'package:dating_app/presentation/user/story_screen.dart';
 import 'package:dating_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -145,33 +146,42 @@ class _MyMessageChatsSectionState extends ConsumerState<MyMessageChatsSection> {
           ),
           SizedBox(height: 10),
           chatState.when(
-            data: (chats) => ListView.builder(
-              itemCount: chats.length,
-              shrinkWrap: true,
-              controller: _controller,
-              itemBuilder: (_, i) {
-                final chat = chats[i];
-                return ChatUserCard(
-                  userId: widget.userId,
-                  data: chat,
-                  onStoryClick: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            StoryScreen(userId: chat.userId ?? ""),
-                      ),
-                    );
-                  },
-                  onClick: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ChatScreen(data: chat,)),
-                    );
-                  },
-                );
-              },
-            ),
+            data: (chats) => chats.isNotEmpty
+                ? ListView.builder(
+                    itemCount: chats.length,
+                    shrinkWrap: true,
+                    controller: _controller,
+                    itemBuilder: (_, i) {
+                      final chat = chats[i];
+                      return ChatUserCard(
+                        userId: widget.userId,
+                        data: chat,
+                        onStoryClick: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  StoryScreen(userId: chat.userId ?? ""),
+                            ),
+                          );
+                        },
+                        onClick: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(data: chat),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  )
+                : Center(
+                    child: MyRegularText(
+                      text: 'No conversions available.',
+                      color: MyColors.textLight2Color(context),
+                    ),
+                  ),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => Center(child: Text(err.toString())),
           ),
@@ -288,14 +298,33 @@ class MyMessageActivitySection extends ConsumerStatefulWidget {
 class _MyMessageActivitySectionState
     extends ConsumerState<MyMessageActivitySection> {
   final ScrollController _controller = ScrollController();
+  String? profilePhotoUrl;
+  String? userId;
+  String? name;
+  bool _isLoading = true;
 
   @override
   void initState() {
+    _loadProfileData();
     super.initState();
 
     // Initial fetch
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(storyNotifierProvider(widget.userId).notifier).loadStories();
+    });
+  }
+
+  Future<void> _loadProfileData() async {
+    final photo = await PrefsHelper.getProfilePhotoUrl();
+    final n = await PrefsHelper.getFullName();
+    String? id = await PrefsHelper.getUserId();
+
+    // Update UI if data found locally
+    setState(() {
+      profilePhotoUrl = photo;
+      userId = id;
+      name = n ?? "N/A";
+      _isLoading = false;
     });
   }
 
@@ -333,7 +362,7 @@ class _MyMessageActivitySectionState
     return storyState.when(
       data: (data) => Padding(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-        child: data.isEmpty
+        child: _isLoading
             ? SizedBox.shrink()
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,32 +377,43 @@ class _MyMessageActivitySectionState
                   ),
                   SizedBox(
                     height: 120,
-                    child: ListView.builder(
-                      itemCount: data.length,
-                      scrollDirection: Axis.horizontal,
-                      controller: _controller,
-                      itemBuilder: (context, index) => Padding(
-                        padding: EdgeInsets.only(
-                          right: 12.0,
-                          left: index == 0 ? 20 : 0,
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: MyStoryCard(
+                            imageUrl: profilePhotoUrl ?? "",
+                            isSeen: true,
+                            onStoryClick: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      StoryScreen(userId: widget.userId),
+                                ),
+                              );
+                            },
+                            onStoryAddClick: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PostStory(),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                        child: index == 0
-                            ? MyStoryCard(
-                                imageUrl: data[index].profilePhotoUrl,
-                                isSeen: data[index].isSeen,
-                                onStoryClick: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => StoryScreen(
-                                        userId: data[index].userId,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                onStoryAddClick: () {},
-                              )
-                            : StoryCard(
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: data.length,
+                            scrollDirection: Axis.horizontal,
+                            controller: _controller,
+                            itemBuilder: (context, index) => Padding(
+                              padding: EdgeInsets.only(
+                                right: 12.0,
+                                left: index == 0 ? 15 : 0,
+                              ),
+                              child: StoryCard(
                                 name: data[index].fullName,
                                 imageUrl: data[index].profilePhotoUrl,
                                 isSeen: data[index].isSeen,
@@ -388,7 +428,10 @@ class _MyMessageActivitySectionState
                                   );
                                 },
                               ),
-                      ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dating_app/data/model/api_exception_model.dart';
 import 'package:dating_app/data/model/response/socket/story/story_model.dart';
 import 'package:dating_app/data/model/response/story/get_user_stories_res_model.dart'
@@ -141,3 +143,36 @@ final getUserStoriesNotifierProvider =
       GetUserStoriesNotifier,
       userstories.GetUserStoriesResModel?
     >(() => GetUserStoriesNotifier());
+
+class UploadStoryNotifier extends AsyncNotifier<StoryModel?> {
+  late final StoryRepository _storyRepository;
+
+  @override
+  Future<StoryModel?> build() async {
+    // Initialize dependencies
+    _storyRepository = ref.read(storyRepositoryProvider);
+    return null;
+  }
+
+  Future<void> uploadStory(String userId, File image) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _storyRepository.uploadStory(userId, image);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      // Caught API model (e.g. {"message": "Incorrect password!"})
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("UPLOAD_STORY_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("UPLOAD_STORY_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+}
+
+final uploadStoryNotifierProvider =
+    AsyncNotifierProvider<UploadStoryNotifier, StoryModel?>(
+      () => UploadStoryNotifier(),
+    );
