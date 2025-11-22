@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dating_app/data/model/response/auth/forget/forget_pass_res_model.dart';
 import 'package:dating_app/data/model/response/auth/login/login_res_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/get_user_details_res.dart'
     hide AgeRangePreference;
@@ -40,6 +41,39 @@ class AuthRepository {
       data,
     );
     return LoginResModel.fromJson(response);
+  }
+
+  Future<ForgetPassResModel> sendOtpForForgetPassword(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await apiClient.post(
+      ApiConstants.sendOtpForResetPassword,
+      data,
+    );
+    return ForgetPassResModel.fromJson(response);
+  }
+
+  Future<ForgetPassResModel> verifyOtpForForgetPassword(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await apiClient.post(
+      ApiConstants.verifyEmailForResetPassword,
+      data,
+    );
+    return ForgetPassResModel.fromJson(response);
+  }
+
+  Future<ForgetPassResModel> resetPassword(Map<String, dynamic> data) async {
+    final response = await apiClient.post(ApiConstants.resetPassword, data);
+    return ForgetPassResModel.fromJson(response);
+  }
+
+  Future<ForgetPassResModel> changePassword(Map<String, dynamic> data) async {
+    final response = await apiClient.putRequest(
+      ApiConstants.changePassword,
+      data,
+    );
+    return ForgetPassResModel.fromJson(response);
   }
 
   Future<ProfileResModel> updateProfile({

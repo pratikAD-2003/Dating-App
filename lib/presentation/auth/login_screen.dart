@@ -3,6 +3,7 @@ import 'package:dating_app/data/local/prefs_helper.dart';
 import 'package:dating_app/data/model/google_auth_req_model.dart';
 import 'package:dating_app/data/model/request/auth/login/login_req_model.dart';
 import 'package:dating_app/data/riverpod/auth_notifier.dart';
+import 'package:dating_app/presentation/auth/forget/forget_pass_screen.dart';
 import 'package:dating_app/presentation/auth/onboarding_screen.dart';
 import 'package:dating_app/presentation/auth/signup_screen.dart';
 import 'package:dating_app/presentation/bottom_nav/bottom_nav.dart';
@@ -223,7 +224,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               TextButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ForgetPassScreen(),
+                                    ),
+                                  );
+                                },
                                 child: MyRegularText(
                                   text: 'forget password?',
                                   color: MyColors.textLightColor(context),

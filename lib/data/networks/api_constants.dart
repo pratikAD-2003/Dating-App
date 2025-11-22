@@ -57,5 +57,6 @@ class ApiConstants {
   static const String getUserMessages = "api/user/chat/messages";
   static const String markSeen = "api/user/chat/mark-seen";
   static const String sendMessage = "api/user/chat/send-message";
+  static const String createChat = "api/user/chat/create-chat";
 
 }

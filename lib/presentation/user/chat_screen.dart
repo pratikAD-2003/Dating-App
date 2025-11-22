@@ -47,6 +47,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     notifier.sendMessage(text);
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

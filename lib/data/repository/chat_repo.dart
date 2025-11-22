@@ -1,7 +1,9 @@
 // chat_repository.dart
+import 'package:dating_app/data/model/request/chat/create_chat_req_model.dart';
 import 'package:dating_app/data/model/request/chat/mark_seen_req_model.dart';
 import 'package:dating_app/data/model/request/chat/send_msg_req_model.dart';
 import 'package:dating_app/data/model/response/chat/chat_user_list_res_model.dart';
+import 'package:dating_app/data/model/response/chat/create_chat_res_model.dart';
 import 'package:dating_app/data/model/response/chat/mark_seen_sucess_res_model.dart';
 import 'package:dating_app/data/model/response/chat/msg_res_model.dart';
 import 'package:dating_app/data/model/response/chat/send_msg_res_model.dart';
@@ -61,6 +63,17 @@ class ChatRepository {
     final res = await apiClient.post(
       ApiConstants.sendMessage,
       SendMsgReqModel(chatId: chatId, senderId: userId, text: text).toJson(),
+    );
+    return res;
+  }
+
+  Future<CreateChatResModel> createChat(
+    String senderId,
+    String receiverId,
+  ) async {
+    final res = await apiClient.post(
+      ApiConstants.createChat,
+      CreateChatReqModel(senderId: senderId, receiverId: receiverId).toJson(),
     );
     return res;
   }

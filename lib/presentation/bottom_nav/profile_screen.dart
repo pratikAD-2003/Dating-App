@@ -1,6 +1,7 @@
 import 'package:dating_app/data/local/google_signing_manager.dart';
 import 'package:dating_app/data/local/prefs_helper.dart';
 import 'package:dating_app/data/riverpod/auth_notifier.dart';
+import 'package:dating_app/presentation/auth/forget/change_pass_screen.dart';
 import 'package:dating_app/presentation/auth/onboarding_screen.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_dialog.dart';
@@ -185,8 +186,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           const SizedBox(height: 10),
                           ProfileOptionCardItem(
                             icon: 'assets/images/setting.png',
-                            text: 'Settings',
-                            onClick: () {},
+                            text: 'Change Password',
+                            onClick: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChangePassScreen(),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 10),
                           ProfileOptionCardItem(

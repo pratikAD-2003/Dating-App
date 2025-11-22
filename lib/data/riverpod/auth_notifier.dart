@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dating_app/data/model/api_exception_model.dart';
+import 'package:dating_app/data/model/response/auth/forget/forget_pass_res_model.dart';
 import 'package:dating_app/data/model/response/auth/login/login_res_model.dart';
 import 'package:dating_app/data/model/response/auth/profile/get_user_details_res.dart'
     hide AgeRangePreference;
@@ -416,3 +417,138 @@ final updateAndRemovePreferenceNotifierProvider =
       PreferenceAndRemovedNotifier,
       UpdateRemoveUserPreferenceResModel?
     >(() => PreferenceAndRemovedNotifier());
+
+// 🔹 SEND OTP FOR FORGET PASSWORD------------------------------------------------------------------------------------------------------------
+class SendOtpFogetPassNotifier extends AsyncNotifier<ForgetPassResModel?> {
+  late final AuthRepository _authRepository;
+
+  @override
+  Future<ForgetPassResModel?> build() async {
+    // Initialize dependencies
+    _authRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  Future<void> sendOtpForFogetPass(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authRepository.sendOtpForForgetPassword(data);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      // Caught API model (e.g. {"message": "Incorrect password!"})
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("SENT_FORGET_PASS_OTP_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("SENT_FORGET_PASS_OTP_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+}
+
+final sendOtpForgetPassNotifierProvider =
+    AsyncNotifierProvider<SendOtpFogetPassNotifier, ForgetPassResModel?>(
+      () => SendOtpFogetPassNotifier(),
+    );
+
+// 🔹 VERIFY OTP FOR FORGET PASSWORD------------------------------------------------------------------------------------------------------------
+class VerifyOtpFogetPassNotifier extends AsyncNotifier<ForgetPassResModel?> {
+  late final AuthRepository _authRepository;
+
+  @override
+  Future<ForgetPassResModel?> build() async {
+    // Initialize dependencies
+    _authRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  Future<void> verifyOtpForFogetPass(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authRepository.verifyOtpForForgetPassword(data);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("VERIFY_FORGET_PASS_OTP_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("VERIFY_FORGET_PASS_OTP_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+}
+
+final verifyOtpForgetPassNotifierProvider =
+    AsyncNotifierProvider<VerifyOtpFogetPassNotifier, ForgetPassResModel?>(
+      () => VerifyOtpFogetPassNotifier(),
+    );
+
+// 🔹 SEND OTP FOR FORGET PASSWORD------------------------------------------------------------------------------------------------------------
+class ResetPassNotifier extends AsyncNotifier<ForgetPassResModel?> {
+  late final AuthRepository _authRepository;
+
+  @override
+  Future<ForgetPassResModel?> build() async {
+    // Initialize dependencies
+    _authRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  Future<void> resetPassword(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authRepository.resetPassword(data);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      // Caught API model (e.g. {"message": "Incorrect password!"})
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("RESET_PASS_OTP_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("RESET_PASS_OTP_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+}
+
+final resetPassNotifierProvider =
+    AsyncNotifierProvider<ResetPassNotifier, ForgetPassResModel?>(
+      () => ResetPassNotifier(),
+    );
+
+// 🔹 CHANGE PASSWORD------------------------------------------------------------------------------------------------------------
+class ChangePassNotifier extends AsyncNotifier<ForgetPassResModel?> {
+  late final AuthRepository _authRepository;
+
+  @override
+  Future<ForgetPassResModel?> build() async {
+    // Initialize dependencies
+    _authRepository = ref.read(authRepoProvider);
+    return null;
+  }
+
+  Future<void> changePassword(Map<String, dynamic> data) async {
+    state = const AsyncValue.loading();
+    try {
+      final response = await _authRepository.changePassword(data);
+      state = AsyncValue.data(response);
+    } on ApiExceptionModel catch (apiError) {
+      // Caught API model (e.g. {"message": "Incorrect password!"})
+      final message = apiError.message ?? "Something went wrong";
+      state = AsyncValue.error(message, StackTrace.current);
+      debugPrint("CHANGE_PASS_OTP_STATUS ---> API ERROR - $message");
+    } catch (e, st) {
+      // Other unexpected errors
+      state = AsyncValue.error("Unexpected error: $e", st);
+      debugPrint("CHANGE_PASS_OTP_STATUS ---> UNKNOWN ERROR - ($e)");
+    }
+  }
+}
+
+final changePassNotifierProvider =
+    AsyncNotifierProvider<ChangePassNotifier, ForgetPassResModel?>(
+      () => ChangePassNotifier(),
+    );

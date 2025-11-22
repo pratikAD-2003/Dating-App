@@ -338,7 +338,13 @@ class HomeBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              SizedBox(width: 5),
+              Image.asset(
+                "assets/images/love_birds.png",
+                height: 48,
+                width: 48,
+                color: MyColors.constTheme,
+              ),
+              SizedBox(width: 10),
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,28 +353,17 @@ class HomeBar extends StatelessWidget {
                     text: 'Discover',
                     color: MyColors.textColor(context),
                   ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    spacing: 3,
-                    children: [
-                      Image.asset(
-                        'assets/images/location.png',
-                        height: 18,
-                        width: 18,
-                      ),
-                      MyRegularText(
-                        text: location,
-                        color: MyColors.textLightColor(context),
-                        fontSize: 15,
-                      ),
-                    ],
+                  MyRegularText(
+                    text: location,
+                    color: MyColors.textLightColor(context),
+                    fontSize: 15,
                   ),
                 ],
               ),
             ],
           ),
           MyIconButton(
-            icon: 'assets/images/heart.png',
+            icon: 'assets/images/star.png',
             padding: 12,
             size: 20,
             onClick: () => onFilter(),

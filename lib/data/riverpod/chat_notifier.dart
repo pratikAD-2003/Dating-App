@@ -1,4 +1,5 @@
 import 'package:dating_app/data/model/response/chat/chat_user_list_res_model.dart';
+import 'package:dating_app/data/model/response/chat/create_chat_res_model.dart';
 import 'package:dating_app/data/model/response/chat/mark_seen_sucess_res_model.dart';
 import 'package:dating_app/data/model/response/chat/msg_res_model.dart';
 import 'package:dating_app/data/model/response/chat/send_msg_res_model.dart';
@@ -223,5 +224,44 @@ final sendMsgNotifierProvider =
         ref.read(chatRepositoryProvider),
         params["userId"]!,
         params["chatId"]!,
+      ),
+    );
+
+// ================================
+// CreateChatNotifier
+// ================================
+class CreateChatNotifier
+    extends StateNotifier<AsyncValue<CreateChatResModel?>> {
+  final ChatRepository repo;
+  final String senderId;
+  final String receiverId;
+
+  CreateChatNotifier(this.repo, this.senderId, this.receiverId)
+    : super(const AsyncValue.data(null));
+
+  void createChat() {
+    if (senderId.isEmpty || receiverId.isEmpty) return;
+
+    repo
+        .createChat(senderId, receiverId)
+        .then((res) {
+          state = AsyncValue.data(res);
+        })
+        .catchError((e) {
+          // ignore errors
+        });
+  }
+}
+
+final createChatNotifierProvider =
+    StateNotifierProvider.family<
+      CreateChatNotifier,
+      AsyncValue<CreateChatResModel?>,
+      Map<String, String>
+    >(
+      (ref, params) => CreateChatNotifier(
+        ref.read(chatRepositoryProvider),
+        params["senderId"]!,
+        params["receiverId"]!,
       ),
     );
