@@ -5,6 +5,7 @@ import 'package:dating_app/data/riverpod/chat_notifier.dart';
 import 'package:dating_app/data/riverpod/story_notifier.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
+import 'package:dating_app/presentation/components/shimmer_layouts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:dating_app/presentation/user/chat_screen.dart';
 import 'package:dating_app/presentation/user/post_story.dart';
@@ -47,9 +48,7 @@ class _MyMessagesScreenState extends State<MyMessagesScreen> {
       backgroundColor: MyColors.background(context),
       body: SafeArea(
         child: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: MyColors.constTheme),
-              )
+            ? const StoryShimmerLy()
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -89,7 +88,8 @@ class MyMessageChatsSection extends ConsumerStatefulWidget {
 
 class _MyMessageChatsSectionState extends ConsumerState<MyMessageChatsSection> {
   final ScrollController _controller = ScrollController();
-
+  List<ChatUserListResModel> chatUsers = [];
+  bool _isLoading = true;
   @override
   void initState() {
     super.initState();
@@ -108,28 +108,29 @@ class _MyMessageChatsSectionState extends ConsumerState<MyMessageChatsSection> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Pass the userId to watch the family provider
-    final chatState = ref.watch(chatListNotifierProvider(widget.userId));
-
     // ✅ Listen for errors (optional, you can also handle loading differently)
-    ref.listen<AsyncValue<List<ChatUserListResModel>>>(
-      chatListNotifierProvider(widget.userId),
-      (previous, next) {
-        next.whenOrNull(
-          error: (err, st) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: MyBoldText(
-                  text: '$err',
-                  fontSize: 16,
-                  color: MyColors.themeColor(context),
-                ),
+    ref.listen(chatListNotifierProvider(widget.userId), (previous, next) {
+      next.whenOrNull(
+        data: (user) async {
+          setState(() {
+            chatUsers = user;
+          });
+          setState(() => _isLoading = false);
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
               ),
-            );
-          },
-        );
-      },
-    );
+            ),
+          );
+          setState(() => _isLoading = false);
+        },
+      );
+    });
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
@@ -145,46 +146,47 @@ class _MyMessageChatsSectionState extends ConsumerState<MyMessageChatsSection> {
             ),
           ),
           SizedBox(height: 10),
-          chatState.when(
-            data: (chats) => chats.isNotEmpty
-                ? ListView.builder(
-                    itemCount: chats.length,
-                    shrinkWrap: true,
-                    controller: _controller,
-                    itemBuilder: (_, i) {
-                      final chat = chats[i];
-                      return ChatUserCard(
-                        userId: widget.userId,
-                        data: chat,
-                        onStoryClick: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  StoryScreen(userId: chat.userId ?? ""),
-                            ),
-                          );
-                        },
-                        onClick: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChatScreen(data: chat),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  )
-                : Center(
+          _isLoading
+              ? ChatUsersShimmerLy()
+              : chatUsers.isNotEmpty
+              ? ListView.builder(
+                  itemCount: chatUsers.length,
+                  shrinkWrap: true,
+                  controller: _controller,
+                  itemBuilder: (_, i) {
+                    final chat = chatUsers[i];
+                    return ChatUserCard(
+                      userId: widget.userId,
+                      data: chat,
+                      onStoryClick: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                StoryScreen(userId: chat.userId ?? ""),
+                          ),
+                        );
+                      },
+                      onClick: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(data: chat),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                )
+              : SizedBox(
+                  height: 300,
+                  child: Center(
                     child: MyRegularText(
                       text: 'No conversions available.',
                       color: MyColors.textLight2Color(context),
                     ),
                   ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(child: Text(err.toString())),
-          ),
+                ),
         ],
       ),
     );
@@ -302,6 +304,8 @@ class _MyMessageActivitySectionState
   String? userId;
   String? name;
   bool _isLoading = true;
+  bool isLoading = true;
+  List<StoryModel> storyUsers = [];
 
   @override
   void initState() {
@@ -339,43 +343,46 @@ class _MyMessageActivitySectionState
     // ✅ Pass the userId to watch the family provider
     final storyState = ref.watch(storyNotifierProvider(widget.userId));
 
-    // ✅ Listen for errors (optional, you can also handle loading differently)
-    ref.listen<AsyncValue<List<StoryModel>>>(
-      storyNotifierProvider(widget.userId),
-      (previous, next) {
-        next.whenOrNull(
-          error: (err, st) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: MyBoldText(
-                  text: '$err',
-                  fontSize: 16,
-                  color: MyColors.themeColor(context),
-                ),
+    ref.listen(storyNotifierProvider(widget.userId), (previous, next) {
+      next.whenOrNull(
+        data: (user) async {
+          setState(() {
+            storyUsers = user;
+          });
+          setState(() => isLoading = false);
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
               ),
-            );
-          },
-        );
-      },
-    );
+            ),
+          );
+          setState(() => isLoading = false);
+        },
+      );
+    });
 
     return storyState.when(
       data: (data) => Padding(
         padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
-        child: _isLoading
-            ? SizedBox.shrink()
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: MyBoldText(
-                      text: 'Activities',
-                      color: MyColors.textColor(context),
-                      fontSize: 20,
-                    ),
-                  ),
-                  SizedBox(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 20.0),
+              child: MyBoldText(
+                text: 'Activities',
+                color: MyColors.textColor(context),
+                fontSize: 20,
+              ),
+            ),
+            (isLoading || _isLoading)
+                ? const StoryShimmerLy()
+                : SizedBox(
                     height: 120,
                     child: Row(
                       children: [
@@ -434,10 +441,10 @@ class _MyMessageActivitySectionState
                       ],
                     ),
                   ),
-                ],
-              ),
+          ],
+        ),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const StoryShimmerLy(),
       error: (err, _) => Center(child: Text(err.toString())),
     );
   }

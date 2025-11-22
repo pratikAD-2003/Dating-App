@@ -3,6 +3,7 @@ import 'package:dating_app/data/riverpod/auth_notifier.dart';
 import 'package:dating_app/presentation/bottom_nav/home_screen.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
+import 'package:dating_app/presentation/components/shimmer_layouts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:dating_app/presentation/user/photo_gallery_screen.dart';
 import 'package:dating_app/utils.dart';
@@ -39,6 +40,7 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
       next.whenOrNull(
         data: (user) async {
           if (user != null) {
+            await Future.delayed(const Duration(milliseconds: 1500));
             setState(() {
               data = user;
               _isLoading = false;
@@ -58,155 +60,134 @@ class _UserDetailScreenState extends ConsumerState<UserDetailScreen> {
         },
       );
     });
+    final isLoading = getUserDetailsState.isLoading || _isLoading;
 
     return Scaffold(
       backgroundColor: MyColors.background(context),
+
       body: SafeArea(
-        child: getUserDetailsState.isLoading || _isLoading
-            ? CircularProgressIndicator(color: MyColors.constTheme)
-            : Stack(
-                children: [
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: Stack(
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          height: 400,
-                          child: Image.network(
-                            data?.data?.profile?.profilePhotoUrl ?? "",
-                            fit: BoxFit.cover,
+        child: Stack(
+          children: [
+            if (isLoading) Positioned.fill(child: UserDetailsShimmerLy()),
+            if (!isLoading)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Stack(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      height: 400,
+                      child: Image.network(
+                        data?.data?.profile?.profilePhotoUrl ?? "",
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(left: 20, top: 20, child: MyBackButton()),
+                  ],
+                ),
+              ),
+            if (!isLoading)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 260,
+                bottom: 0,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 65,
+                      bottom: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: MyColors.background(context),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(30),
+                            topRight: Radius.circular(30),
                           ),
                         ),
-                        Positioned(left: 20, top: 20, child: MyBackButton()),
-                      ],
+                      ),
                     ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 260,
-                    bottom: 0,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: 65,
-                          bottom: 0,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: MyColors.background(context),
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(30),
-                                topRight: Radius.circular(30),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          HomeBottomSection(
+                            onReject: () {},
+                            onAccept: () {},
+                            onFavorite: () {},
+                          ),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding: EdgeInsetsGeometry.symmetric(
+                                  horizontal: 20,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(height: 20),
+
+                                    UserDetailNameLableSection(
+                                      age: Utils.calculateAge(
+                                        data?.data?.profile?.dateOfBirth ?? "",
+                                      ),
+                                      name: data?.data?.profile?.fullName ?? "",
+                                      profession:
+                                          data?.data?.profile?.profession ?? "",
+                                      onMessage: () {},
+                                    ),
+                                    SizedBox(height: 30),
+                                    UserDetailsLocationSection(
+                                      data:
+                                          data?.data?.preferences?.location ??
+                                          Location(),
+                                    ),
+                                    SizedBox(height: 30),
+                                    UserDetailsAboutSection(
+                                      bio: data?.data?.profile?.bio ?? "",
+                                    ),
+                                    SizedBox(height: 30),
+                                    UserDetailsInterestSection(
+                                      interest:
+                                          data?.data?.preferences?.interests ??
+                                          [],
+                                    ),
+                                    SizedBox(height: 30),
+                                    UserDetailsLanguageSection(
+                                      languages:
+                                          data?.data?.preferences?.languages ??
+                                          [],
+                                    ),
+                                    SizedBox(height: 30),
+                                    if (data?.data?.preferences?.gallery !=
+                                        null)
+                                      UserDetailsGallerySection(
+                                        images:
+                                            data?.data?.preferences?.gallery ??
+                                            [],
+                                      ),
+                                    SizedBox(height: 30),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              HomeBottomSection(
-                                onReject: () {},
-                                onAccept: () {},
-                                onFavorite: () {},
-                              ),
-                              Expanded(
-                                child: SingleChildScrollView(
-                                  child: Padding(
-                                    padding: EdgeInsetsGeometry.symmetric(
-                                      horizontal: 20,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(height: 20),
-
-                                        UserDetailNameLableSection(
-                                          age: Utils.calculateAge(
-                                            data?.data?.profile?.dateOfBirth ??
-                                                "",
-                                          ),
-                                          name:
-                                              data?.data?.profile?.fullName ??
-                                              "",
-                                          profession:
-                                              data?.data?.profile?.profession ??
-                                              "",
-                                          onMessage: () {},
-                                        ),
-                                        SizedBox(height: 30),
-                                        UserDetailsLocationSection(
-                                          data:
-                                              data
-                                                  ?.data
-                                                  ?.preferences
-                                                  ?.location ??
-                                              Location(),
-                                        ),
-                                        SizedBox(height: 30),
-                                        UserDetailsAboutSection(
-                                          bio: data?.data?.profile?.bio ?? "",
-                                        ),
-                                        SizedBox(height: 30),
-                                        UserDetailsInterestSection(
-                                          interest:
-                                              data
-                                                  ?.data
-                                                  ?.preferences
-                                                  ?.interests ??
-                                              [],
-                                        ),
-                                        SizedBox(height: 30),
-                                        UserDetailsLanguageSection(
-                                          languages:
-                                              data
-                                                  ?.data
-                                                  ?.preferences
-                                                  ?.languages ??
-                                              [],
-                                        ),
-                                        SizedBox(height: 30),
-                                        if (data?.data?.preferences?.gallery !=
-                                            null)
-                                          UserDetailsGallerySection(
-                                            // images: [
-                                            //   'assets/images/m2.jpg',
-                                            //   'assets/images/m3.jpg',
-                                            //   'assets/images/m2.jpg',
-                                            //   'assets/images/m3.jpg',
-                                            //   'assets/images/m2.jpg',
-                                            // ],
-                                            images:
-                                                data
-                                                    ?.data
-                                                    ?.preferences
-                                                    ?.gallery ??
-                                                [],
-                                          ),
-                                        SizedBox(height: 30),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+          ],
+        ),
       ),
     );
   }
@@ -262,9 +243,19 @@ class UserDetailsGallerySection extends StatelessWidget {
           spacing: 10,
           children: firstImages.map((img) {
             return Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(img, fit: BoxFit.cover, height: 220),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PhotoGalleryScreen(images: images),
+                    ),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(img, fit: BoxFit.cover, height: 220),
+                ),
               ),
             );
           }).toList(),
@@ -277,13 +268,23 @@ class UserDetailsGallerySection extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: remainingImages.map((img) {
-              return SizedBox(
-                width:
-                    (MediaQuery.of(context).size.width - 60) / 3, // 3 per row
-                height: 160,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(img, fit: BoxFit.cover),
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PhotoGalleryScreen(images: images),
+                    ),
+                  );
+                },
+                child: SizedBox(
+                  width:
+                      (MediaQuery.of(context).size.width - 60) / 3, // 3 per row
+                  height: 160,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(img, fit: BoxFit.cover),
+                  ),
                 ),
               );
             }).toList(),

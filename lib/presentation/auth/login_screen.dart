@@ -189,7 +189,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Icon(Icons.app_registration, size: 80),
+                    Image.asset(
+                      'assets/images/love_birds.png',
+                      height: 90,
+                      width: 90,
+                      color: MyColors.constTheme,
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 30),
                       child: Column(
@@ -214,9 +219,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             controller: confirmPassController,
                             hintText: 'Password',
                           ),
-                          SizedBox(height: 30),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () {},
+                                child: MyRegularText(
+                                  text: 'forget password?',
+                                  color: MyColors.textLightColor(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
                           MyButton(
-                            text: 'Login account',
+                            text: 'Login',
                             isLoading: authState.isLoading,
                             onClick: () async {
                               LoginReqModel data = LoginReqModel(

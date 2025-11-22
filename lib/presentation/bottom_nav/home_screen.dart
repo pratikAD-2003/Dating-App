@@ -52,8 +52,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       next.whenOrNull(
         data: (user) async {
           if (user != null) {
-            await Future.delayed(const Duration(seconds: 2));
-
             setState(() {
               homeUsersList = user.users ?? [];
             });
@@ -333,31 +331,44 @@ class HomeBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          MyIconButton(
-            icon: 'assets/images/location.png',
-            padding: 12,
-            size: 20,
-            onClick: () => onLocation(),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          Row(
             children: [
-              MyBoldText(text: 'Discover', color: MyColors.textColor(context)),
-              MyRegularText(
-                text: location,
-                color: MyColors.textLightColor(context),
-                fontSize: 15,
+              SizedBox(width: 5),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MyBoldText(
+                    text: 'Discover',
+                    color: MyColors.textColor(context),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 3,
+                    children: [
+                      Image.asset(
+                        'assets/images/location.png',
+                        height: 18,
+                        width: 18,
+                      ),
+                      MyRegularText(
+                        text: location,
+                        color: MyColors.textLightColor(context),
+                        fontSize: 15,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
           MyIconButton(
-            icon: 'assets/images/filter.png',
+            icon: 'assets/images/heart.png',
             padding: 12,
             size: 20,
             onClick: () => onFilter(),

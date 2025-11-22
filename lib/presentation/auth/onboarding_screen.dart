@@ -147,15 +147,14 @@ class AuthRememberText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      spacing: 5,
       children: [
         MyRegularText(
           text: mainText,
           color: MyColors.textLightColor(context),
           textAlign: TextAlign.center,
         ),
-        InkWell(
-          onTap: () => onClick(),
+        TextButton(
+          onPressed: () => onClick(),
           child: MyBoldText(
             text: endText,
             color: MyColors.constTheme,

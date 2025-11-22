@@ -182,7 +182,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Icon(Icons.app_registration, size: 80),
+                    Image.asset(
+                      'assets/images/love_birds.png',
+                      height: 90,
+                      width: 90,
+                      color: MyColors.constTheme,
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 30),
                       child: Column(
