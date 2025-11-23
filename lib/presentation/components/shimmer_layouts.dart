@@ -652,3 +652,47 @@ class ChatUsersShimmerLy extends StatelessWidget {
     );
   }
 }
+
+class StoryScreenShimmerLy extends StatelessWidget {
+  const StoryScreenShimmerLy({
+    super.key,
+    this.vertical = 10,
+    this.horizontal = 25,
+  });
+
+  final double vertical;
+  final double horizontal;
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      direction: ShimmerDirection.ltr,
+      period: const Duration(milliseconds: 1500),
+
+      baseColor: MyColors.shimmerBaseColor(context),
+
+      highlightColor: MyColors.shimmerHighlightedColor(context),
+
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontal,
+          vertical: vertical,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 20,
+          children: [
+            Container(
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.9,
+              decoration: BoxDecoration(
+                color: MyColors.shimmerContainerColor(context),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -11,6 +11,7 @@ import 'package:dating_app/presentation/profile/edit/edit_language.dart';
 import 'package:dating_app/presentation/profile/edit/edit_location.dart';
 import 'package:dating_app/presentation/profile/edit/edit_profile.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
+import 'package:dating_app/presentation/user/mymatched_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -130,113 +131,128 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   MyProfileAppBarSection(),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20.0,
-                        vertical: 10,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 20),
-                          ProfileDetailSection(
-                            image: profilePhotoUrl,
-                            name: fullName,
-                            profession: profession,
-                          ),
-                          const SizedBox(height: 30),
-                          ProfileOptionCardItem(
-                            icon: 'assets/images/hobbies.png',
-                            text: 'Edit Preferences',
-                            onClick: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditLocation(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          ProfileOptionCardItem(
-                            icon: 'assets/images/choices.png',
-                            text: 'Edit Interest',
-                            onClick: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditInterest(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          ProfileOptionCardItem(
-                            icon: 'assets/images/translation.png',
-                            text: 'Edit Language',
-                            onClick: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditLanguage(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          ProfileOptionCardItem(
-                            icon: 'assets/images/setting.png',
-                            text: 'Change Password',
-                            onClick: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChangePassScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 10),
-                          ProfileOptionCardItem(
-                            icon: 'assets/images/help.png',
-                            text: 'Contact Support',
-                            onClick: () {},
-                          ),
-                          const SizedBox(height: 10),
-                          ProfileOptionCardItem(
-                            icon: 'assets/images/t_and_c.png',
-                            text: 'Terms & Conditions',
-                            onClick: () {},
-                          ),
-                          const SizedBox(height: 10),
-                          ProfileOptionCardItem(
-                            icon: 'assets/images/logout.png',
-                            text: 'Logout',
-                            onClick: () async {
-                              showDialog(
-                                context: context,
-                                builder: (_) => MyAlertDialog(
-                                  title: "Logged out",
-                                  subtitle: "Are you sure you want to logout?",
-                                  btn1Text: "Cancel",
-                                  btn2Text: "Logout",
-                                  onBtn2Tap: () async {
-                                    await PrefsHelper.clearAll();
-                                    await googleSignInManager.signOut();
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            OnboardingScreen(),
-                                      ),
-                                      (Route<dynamic> route) => false,
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 10,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ProfileDetailSection(
+                              image: profilePhotoUrl,
+                              name: fullName,
+                              profession: profession,
+                            ),
+                            const SizedBox(height: 30),
+                            ProfileOptionCardItem(
+                              icon: 'assets/images/hobbies.png',
+                              text: 'Edit Preferences',
+                              onClick: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditLocation(),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            ProfileOptionCardItem(
+                              icon: 'assets/images/choices.png',
+                              text: 'Edit Interest',
+                              onClick: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditInterest(),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            ProfileOptionCardItem(
+                              icon: 'assets/images/translation.png',
+                              text: 'Edit Language',
+                              onClick: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditLanguage(),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            ProfileOptionCardItem(
+                              icon: 'assets/images/heart.png',
+                              text: 'My Matched',
+                              onClick: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MyMatchedScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            ProfileOptionCardItem(
+                              icon: 'assets/images/setting.png',
+                              text: 'Change Password',
+                              onClick: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChangePassScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            ProfileOptionCardItem(
+                              icon: 'assets/images/help.png',
+                              text: 'Contact Support',
+                              onClick: () {},
+                            ),
+                            const SizedBox(height: 10),
+                            ProfileOptionCardItem(
+                              icon: 'assets/images/t_and_c.png',
+                              text: 'Terms & Conditions',
+                              onClick: () {},
+                            ),
+                            const SizedBox(height: 10),
+                            ProfileOptionCardItem(
+                              icon: 'assets/images/logout.png',
+                              text: 'Logout',
+                              onClick: () async {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => MyAlertDialog(
+                                    title: "Logged out",
+                                    subtitle:
+                                        "Are you sure you want to logout?",
+                                    btn1Text: "Cancel",
+                                    btn2Text: "Logout",
+                                    onBtn2Tap: () async {
+                                      await PrefsHelper.clearAll();
+                                      await googleSignInManager.signOut();
+                                      Navigator.pushAndRemoveUntil(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              OnboardingScreen(),
+                                        ),
+                                        (Route<dynamic> route) => false,
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

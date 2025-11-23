@@ -1,12 +1,16 @@
 import 'dart:ui';
 
 import 'package:dating_app/data/local/prefs_helper.dart';
+import 'package:dating_app/data/model/request/user/handle_interaction_req_model.dart';
 import 'package:dating_app/data/model/response/user/get_home_users_res_model.dart';
+import 'package:dating_app/data/networks/api_constants.dart';
 import 'package:dating_app/data/riverpod/user_notifier.dart';
+import 'package:dating_app/presentation/components/lottie_animations.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
 import 'package:dating_app/presentation/components/shimmer_layouts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
+import 'package:dating_app/presentation/user/favorite_screen.dart';
 import 'package:dating_app/presentation/user/user_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,8 +28,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String? currentCity;
   String? userId;
+  String? otherUserId;
   bool _isLoading = true;
   List<Users> homeUsersList = [];
+  String actionStatus = "";
   @override
   void initState() {
     loadData();
@@ -54,8 +60,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           if (user != null) {
             setState(() {
               homeUsersList = user.users ?? [];
+              if (homeUsersList.isNotEmpty) {
+                otherUserId = homeUsersList.first.userId ?? "";
+              }
             });
             setState(() => _isLoading = false);
+          }
+        },
+        error: (err, st) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: MyBoldText(
+                text: '$err',
+                fontSize: 16,
+                color: MyColors.themeColor(context),
+              ),
+            ),
+          );
+          setState(() => _isLoading = false);
+        },
+      );
+    });
+
+    // HANDLE INTERATION
+    ref.listen(handleInteractionProvider, (previous, next) {
+      next.whenOrNull(
+        data: (user) async {
+          if (user != null) {
+            LottieAnimations.showSavedAnimation(
+              context,
+              actionStatus == "favorite"
+                  ? 'assets/animations/save.json'
+                  : "assets/animations/like.json",
+            );
+            if (actionStatus == "right") {
+              _controller.forward(direction: SwipDirection.Right);
+            }
+            if (actionStatus == "favorite") {
+              _controller.forward(direction: SwipDirection.Left);
+            }
           }
         },
         error: (err, st) {
@@ -87,7 +130,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 HomeBar(
                   location: currentCity ?? "",
                   onLocation: () {},
-                  onFilter: () {},
+                  onFilter: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => FavoriteScreen()),
+                    );
+                  },
                 ),
                 SizedBox(height: 20),
                 Expanded(
@@ -109,8 +157,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     age: e.age ?? -1,
                                     distance: e.distance ?? 0,
                                     name: e.fullName ?? "",
-                                    onSwipeLeft: () {},
-                                    onSwipeRight: () {},
                                     onClick: () {
                                       Navigator.push(
                                         context,
@@ -125,7 +171,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                 )
                                 .toList(),
-                            onForward: (index, info) {
+                            onForward: (index, info) async {
+                              if (info.direction == SwipDirection.Right) {
+                                setState(() {
+                                  actionStatus = "rightm";
+                                });
+                                await ref
+                                    .read(handleInteractionProvider.notifier)
+                                    .handleInteration(
+                                      HandleInteractionReqModel(
+                                        fromUser: userId,
+                                        toUser: otherUserId,
+                                        status: ApiConstants.SEND_MATCH_REQUEST,
+                                      ).toJson(),
+                                    );
+                              }
+                              setState(() {
+                                otherUserId = homeUsersList[index].userId;
+                              });
                               debugPrint(
                                 "Swiped ${info.direction == SwipDirection.Left ? "Left ❌" : "Right ❤️"}",
                               );
@@ -145,10 +208,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onReject: () {
                       _controller.forward(direction: SwipDirection.Left);
                     },
-                    onAccept: () {
-                      _controller.forward(direction: SwipDirection.Right);
+                    onAccept: () async {
+                      setState(() {
+                        actionStatus = "right";
+                      });
+                      await ref
+                          .read(handleInteractionProvider.notifier)
+                          .handleInteration(
+                            HandleInteractionReqModel(
+                              fromUser: userId,
+                              toUser: otherUserId,
+                              status: ApiConstants.SEND_MATCH_REQUEST,
+                            ).toJson(),
+                          );
                     },
-                    onFavorite: () {},
+                    onFavorite: () async {
+                      setState(() {
+                        actionStatus = "favorite";
+                      });
+                      await ref
+                          .read(handleInteractionProvider.notifier)
+                          .handleInteration(
+                            HandleInteractionReqModel(
+                              fromUser: userId,
+                              toUser: otherUserId,
+                              status: ApiConstants.MARK_SAVED,
+                            ).toJson(),
+                          );
+                    },
                   ),
               ],
             ),
@@ -167,8 +254,6 @@ class HomeCardLy extends StatefulWidget {
     required this.age,
     required this.name,
     required this.job,
-    this.onSwipeLeft,
-    this.onSwipeRight,
     required this.onClick,
   });
   final String icon;
@@ -176,8 +261,6 @@ class HomeCardLy extends StatefulWidget {
   final int age;
   final String name;
   final String job;
-  final VoidCallback? onSwipeLeft;
-  final VoidCallback? onSwipeRight;
   final VoidCallback onClick;
 
   @override
@@ -193,38 +276,6 @@ class _HomeCardLyState extends State<HomeCardLy> {
     return GestureDetector(
       onTap: () {
         widget.onClick();
-      },
-      onPanStart: (_) {
-        // reset when new drag starts
-        dragValue = 0;
-        direction = "";
-      },
-      onPanUpdate: (details) {
-        // track horizontal drag
-        setState(() {
-          dragValue += details.delta.dx;
-
-          // detect direction
-          if (details.delta.dx > 0) {
-            direction = "right";
-          } else if (details.delta.dx < 0) {
-            direction = "left";
-          }
-        });
-      },
-      onPanEnd: (details) {
-        // check threshold for complete swipe
-        if (dragValue > 100) {
-          widget.onSwipeRight?.call();
-        } else if (dragValue < -100) {
-          widget.onSwipeLeft?.call();
-        }
-
-        // reset
-        setState(() {
-          dragValue = 0;
-          direction = "";
-        });
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),

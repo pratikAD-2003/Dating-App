@@ -5,6 +5,7 @@ import 'package:dating_app/presentation/bottom_nav/my_messages_screen.dart';
 import 'package:dating_app/presentation/components/my_buttons.dart';
 import 'package:dating_app/presentation/components/my_input.dart';
 import 'package:dating_app/presentation/components/my_texts.dart';
+import 'package:dating_app/presentation/components/shimmer_layouts.dart';
 import 'package:dating_app/presentation/theme/my_colors.dart';
 import 'package:dating_app/utils.dart';
 import 'package:flutter/material.dart';
@@ -236,8 +237,7 @@ class _StoryScreenState extends ConsumerState<StoryScreen>
               ],
             );
           },
-          loading: () =>
-              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          loading: () => const StoryScreenShimmerLy(),
           error: (err, _) => Center(child: Text(err.toString())),
         ),
       ),
